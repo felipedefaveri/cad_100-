@@ -5,23 +5,36 @@ Mantém o "repositório online" que o app dos vistoriantes consulta sempre
 atualizado. Rode este script toda vez que uma nova planilha for exportada
 do sistema da empresa (pode ser manual ou agendado, ex: cron/Task Scheduler).
 
-Formato esperado da planilha (.xlsx ou .csv):
+Reconhece automaticamente tanto o layout de exportação da concessionária
+(ex: "NRO.LIGAÇÃO", "Nº HIDRÔMETRO", "SITUAÇÃO ÁGUA", "LOGRADOURO"...) quanto
+um layout simplificado ("numero_hidrometro", "matricula", "endereco"...) —
+o casamento de colunas ignora maiúsculas/minúsculas, acentos e pontuação.
 
-Aba/arquivo "hidrometros" (cadastro, uma linha por HD):
-    numero_hidrometro | matricula | endereco   | bairro | economias | ativo
-    HD-000123          | 45678     | Rua A, 100 | Centro | 8         | sim
+Aba/arquivo "hidrometros" (cadastro, uma linha por HD) — colunas reconhecidas:
+    - número do hidrômetro (obrigatório, chave de busca no app):
+      "Nº HIDRÔMETRO", "numero_hidrometro", "hidrometro"
+    - matrícula/ligação (opcional, informação complementar):
+      "NRO.LIGAÇÃO", "matricula"
+    - quantidade de economias:
+      "ECONOMIA", "economias"
+    - situação (ativo/inativo):
+      "SITUAÇÃO ÁGUA", "ativo" — ver mapeamento de termos abaixo
+    - endereço:
+      "LOGRADOURO" (+ "LOGRADOURO_NÚMERO" + "LOGRADOURO_COMPLEMENTO" se
+      existirem, concatenados automaticamente), ou "endereco" pronto
+    - bairro:
+      "BAIRRO", "bairro"
 
-Aba/arquivo "consumos" (histórico mensal, uma linha por HD/mês):
+Aba/arquivo "consumos" (histórico mensal, uma linha por HD/mês — não vem na
+planilha de cadastro da concessionária, precisa de uma exportação à parte):
     numero_hidrometro | ano_mes    | volume_m3
     HD-000123          | 2026-07    | 45.3
 
-- "numero_hidrometro" é o número de série gravado no aparelho físico (o que o
-  vistoriante vê e digita no app em campo) — é a chave de busca.
-- "matricula" é a matrícula da economia/imóvel no sistema comercial; pode ser
-  diferente do número do hidrômetro e é opcional (pode ficar em branco).
 - "ano_mes" aceita "YYYY-MM" ou uma data completa (usa-se sempre o dia 1).
-- "ativo" aceita sim/não, s/n, true/false, 1/0 (case-insensitive).
-- Linhas com número de hidrômetro vazio são ignoradas.
+- Linhas sem número de hidrômetro são ignoradas.
+- Termos de "situação água" não reconhecidos são avisados no final da
+  importação (e tratados como ativo, para não esconder HDs por engano) —
+  ajuste ATIVO_TERMS/INATIVO_TERMS abaixo se aparecerem termos novos.
 
 Uso:
     python import_hd.py --file planilha.xlsx
@@ -37,7 +50,9 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
+import unicodedata
 from datetime import date
 from pathlib import Path
 
@@ -53,20 +68,65 @@ except ImportError:
 
 CHUNK_SIZE = 500
 
-TRUE_VALUES = {"sim", "s", "true", "1", "ativo", "yes", "y"}
-FALSE_VALUES = {"nao", "não", "n", "false", "0", "inativo", "no"}
+# Termos de "SITUAÇÃO ÁGUA" (ou coluna "ativo" com texto livre) conhecidos.
+# Ajuste aqui se a concessionária usar termos diferentes destes.
+ATIVO_TERMS = {"LIGADA", "LIGADO", "NORMAL", "ATIVA", "ATIVO", "REGULAR", "SIM", "S", "TRUE", "1"}
+INATIVO_TERMS = {
+    "CORTADA", "CORTADO", "SUSPENSA", "SUSPENSO", "INATIVA", "INATIVO",
+    "DESLIGADA", "DESLIGADO", "FECHADA", "FECHADO", "CANCELADA", "CANCELADO",
+    "NAO", "N", "FALSE", "0",
+}
+
+# Aliases de coluna (já normalizados: maiúsculo, sem acento, só alfanumérico)
+# -> nome canônico do campo interno.
+COLUMN_ALIASES: dict[str, set[str]] = {
+    "numero_hidrometro": {
+        "NHIDROMETRO", "NOHIDROMETRO", "NUMEROHIDROMETRO", "HIDROMETRO", "NUMHIDROMETRO",
+    },
+    "matricula": {"MATRICULA", "NROLIGACAO", "NUMEROLIGACAO", "LIGACAO", "NLIGACAO"},
+    "economias": {"ECONOMIA", "ECONOMIAS", "QTDECONOMIAS", "QUANTIDADEECONOMIAS"},
+    "ativo": {"ATIVO", "SITUACAOAGUA", "SITUACAO"},
+    "endereco": {"ENDERECO"},
+    "logradouro": {"LOGRADOURO"},
+    "logradouro_numero": {"LOGRADOURONUMERO"},
+    "logradouro_complemento": {"LOGRADOUROCOMPLEMENTO", "COMPLEMENTO"},
+    "bairro": {"BAIRRO"},
+}
 
 
-def parse_bool(value) -> bool:
+def normalize_header(name: str) -> str:
+    text = unicodedata.normalize("NFKD", str(name))
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    return re.sub(r"[^A-Z0-9]", "", text.upper())
+
+
+ATIVO_TERMS_NORM = {normalize_header(t) for t in ATIVO_TERMS}
+INATIVO_TERMS_NORM = {normalize_header(t) for t in INATIVO_TERMS}
+
+
+def map_columns(columns) -> dict[str, str]:
+    """Retorna {campo_canonico: nome_original_da_coluna} para as colunas encontradas."""
+    normalized = {normalize_header(c): c for c in columns}
+    resolved: dict[str, str] = {}
+    for campo, aliases in COLUMN_ALIASES.items():
+        for alias in aliases:
+            if alias in normalized:
+                resolved[campo] = normalized[alias]
+                break
+    return resolved
+
+
+def parse_situacao(value, termos_desconhecidos: set[str]) -> bool:
     if isinstance(value, bool):
         return value
     if pd.isna(value):
         return True
-    text = str(value).strip().lower()
-    if text in TRUE_VALUES:
+    texto = normalize_header(value)
+    if texto in ATIVO_TERMS_NORM:
         return True
-    if text in FALSE_VALUES:
+    if texto in INATIVO_TERMS_NORM:
         return False
+    termos_desconhecidos.add(str(value).strip())
     return True
 
 
@@ -93,47 +153,102 @@ def read_sheet_or_csv(file_arg: str | None, csv_arg: str | None, sheet_name: str
     return None
 
 
+def montar_endereco(row: pd.Series, col: dict[str, str]) -> str | None:
+    if "endereco" in col:
+        valor = str(row.get(col["endereco"], "")).strip()
+        return valor or None
+    rua = str(row.get(col["logradouro"], "")).strip() if "logradouro" in col else ""
+    if rua.lower() == "nan":
+        rua = ""
+
+    if "logradouro_numero" in col:
+        numero = str(row.get(col["logradouro_numero"], "")).strip()
+        if numero and numero.lower() != "nan":
+            rua = f"{rua}, {numero}" if rua else numero
+
+    partes = [rua] if rua else []
+    if "logradouro_complemento" in col:
+        complemento = str(row.get(col["logradouro_complemento"], "")).strip()
+        if complemento and complemento.lower() != "nan":
+            partes.append(complemento)
+
+    endereco = " - ".join(partes)
+    return endereco or None
+
+
 def build_hidrometros_payload(df: pd.DataFrame) -> list[dict]:
-    df = df.rename(columns={c: c.strip().lower() for c in df.columns})
+    col = map_columns(df.columns)
+    if "numero_hidrometro" not in col:
+        raise SystemExit(
+            "Não encontrei a coluna do número do hidrômetro na planilha "
+            "(esperado algo como 'Nº HIDRÔMETRO' ou 'numero_hidrometro'). "
+            f"Colunas encontradas: {list(df.columns)}"
+        )
+
+    termos_desconhecidos: set[str] = set()
     rows = []
     for _, row in df.iterrows():
-        numero_hidrometro = str(row.get("numero_hidrometro", "")).strip()
+        numero_hidrometro = str(row.get(col["numero_hidrometro"], "")).strip()
         if not numero_hidrometro or numero_hidrometro.lower() == "nan":
             continue
-        matricula = str(row.get("matricula", "")).strip()
-        economias_raw = row.get("economias", 0)
-        try:
-            economias = int(float(economias_raw)) if pd.notna(economias_raw) else 0
-        except ValueError:
-            economias = 0
+
+        matricula = str(row.get(col.get("matricula", ""), "")).strip() if "matricula" in col else ""
+
+        economias = 0
+        if "economias" in col:
+            economias_raw = row.get(col["economias"])
+            try:
+                economias = int(float(economias_raw)) if pd.notna(economias_raw) else 0
+            except ValueError:
+                economias = 0
+
+        ativo = parse_situacao(row.get(col["ativo"]), termos_desconhecidos) if "ativo" in col else True
+
         rows.append(
             {
                 "numero_hidrometro": numero_hidrometro,
                 "matricula": (matricula if matricula and matricula.lower() != "nan" else None),
-                "endereco": (str(row.get("endereco", "")).strip() or None),
-                "bairro": (str(row.get("bairro", "")).strip() or None),
+                "endereco": montar_endereco(row, col),
+                "bairro": (str(row.get(col.get("bairro", ""), "")).strip() or None) if "bairro" in col else None,
                 "economias": economias,
-                "ativo": parse_bool(row.get("ativo")),
+                "ativo": ativo,
             }
         )
+
+    if termos_desconhecidos:
+        print(
+            "  AVISO: termos de situação não reconhecidos (tratados como ATIVO por padrão): "
+            + ", ".join(sorted(termos_desconhecidos))
+        )
+        print("  Se algum desses significar inativo, adicione-o em INATIVO_TERMS no topo do script e rode de novo.")
+
     return rows
 
 
 def build_consumos_payload(df: pd.DataFrame) -> list[dict]:
-    df = df.rename(columns={c: c.strip().lower() for c in df.columns})
+    col = map_columns(df.columns)
+    numero_col = col.get("numero_hidrometro", "numero_hidrometro")
+    ano_mes_col = "ano_mes" if "ano_mes" in df.columns else None
+    volume_col = "volume_m3" if "volume_m3" in df.columns else None
+    if numero_col not in df.columns or ano_mes_col is None or volume_col is None:
+        raise SystemExit(
+            "A aba/arquivo de consumos precisa das colunas: numero_hidrometro, ano_mes, volume_m3. "
+            f"Colunas encontradas: {list(df.columns)}"
+        )
+
     rows = []
     for _, row in df.iterrows():
-        numero_hidrometro = str(row.get("numero_hidrometro", "")).strip()
-        if not numero_hidrometro or numero_hidrometro.lower() == "nan" or pd.isna(row.get("ano_mes")):
+        numero_hidrometro = str(row.get(numero_col, "")).strip()
+        if not numero_hidrometro or numero_hidrometro.lower() == "nan" or pd.isna(row.get(ano_mes_col)):
             continue
         try:
-            volume = float(row.get("volume_m3", 0) or 0)
+            volume = float(row.get(volume_col, 0) or 0)
         except ValueError:
             volume = 0.0
         rows.append(
             {
                 "numero_hidrometro": numero_hidrometro,
-                "ano_mes": parse_ano_mes(row["ano_mes"]),
+                "ano_mes": parse_ano_mes(row[ano_mes_col]),
                 "volume_m3": volume,
             }
         )

@@ -43,13 +43,35 @@ pip install -r requirements.txt
 cp .env.example .env   # preencha SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY
 ```
 
-Monte a planilha `.xlsx` com duas abas (ou use dois `.csv` separados):
+O script já reconhece automaticamente o layout de exportação padrão da
+concessionária (ignora acentos/pontuação/maiúsculas ao ler as colunas), por
+exemplo:
 
-- **`hidrometros`**: `numero_hidrometro | matricula | endereco | bairro | economias | ativo`
-  (`numero_hidrometro` é obrigatório e é a chave de busca no app; `matricula`
-  é opcional, é o número da conta/economia no sistema comercial)
-- **`consumos`**: `numero_hidrometro | ano_mes | volume_m3` (uma linha por
-  HD/mês, `ano_mes` no formato `YYYY-MM`)
+- **Cadastro** (aba/arquivo `hidrometros`): `NRO.LIGAÇÃO`, `CLIENTE`,
+  `ECONOMIA`, `ECO.RES.`, `ECO.COM.`, `ECO.IND.`, `ECO.PUB.`, `LOGRADOURO`,
+  `LOGRADOURO_NÚMERO`, `LOGRADOURO_COMPLEMENTO`, `BAIRRO`,
+  `SITUAÇÃO ÁGUA`, `Nº HIDRÔMETRO`.
+  - `Nº HIDRÔMETRO` é obrigatório — é a chave de busca no app.
+  - `NRO.LIGAÇÃO` vira a `matricula` (informação complementar).
+  - `LOGRADOURO` + `LOGRADOURO_NÚMERO` + `LOGRADOURO_COMPLEMENTO` são
+    concatenados automaticamente no endereço.
+  - `SITUAÇÃO ÁGUA` define o status ativo/inativo — hoje o script reconhece
+    termos como `LIGADA`/`ATIVA` (ativo) e `CORTADA`/`SUSPENSA`/`INATIVA`
+    (inativo). Se aparecer um termo diferente, o script **avisa no final**
+    quais termos não reconheceu (e trata como ativo por padrão, pra nunca
+    esconder um HD sem querer) — é só me falar o termo que eu adiciono no
+    mapeamento.
+  - `CLIENTE` e o detalhamento `ECO.RES./ECO.COM./ECO.IND./ECO.PUB.` não são
+    importados por enquanto (só o total de `ECONOMIA`) — posso adicionar se
+    fizer falta.
+- **Histórico de consumo** (aba/arquivo `consumos`) — **não vem na planilha
+  de cadastro**, precisa de uma exportação separada com uma linha por
+  HD/mês: `numero_hidrometro | ano_mes | volume_m3` (`ano_mes` no formato
+  `YYYY-MM`).
+
+Também funciona com o layout simplificado `numero_hidrometro | matricula |
+endereco | bairro | economias | ativo`, se você preferir montar a planilha
+assim.
 
 Rode a importação:
 
