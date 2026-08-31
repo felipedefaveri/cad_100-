@@ -147,9 +147,14 @@ def read_sheet_or_csv(file_arg: str | None, csv_arg: str | None, sheet_name: str
     if file_arg:
         xls = pd.ExcelFile(file_arg)
         matches = [s for s in xls.sheet_names if s.strip().lower() == sheet_name]
-        if not matches:
-            return None
-        return pd.read_excel(xls, sheet_name=matches[0], dtype=str)
+        if matches:
+            return pd.read_excel(xls, sheet_name=matches[0], dtype=str)
+        if sheet_name == "hidrometros" and len(xls.sheet_names) == 1:
+            # Planilha com uma única aba de nome genérico (ex: "Planilha1"):
+            # assume que é o cadastro de hidrômetros.
+            print(f"  (usando a única aba da planilha, '{xls.sheet_names[0]}', como cadastro de hidrômetros)")
+            return pd.read_excel(xls, sheet_name=xls.sheet_names[0], dtype=str)
+        return None
     return None
 
 
