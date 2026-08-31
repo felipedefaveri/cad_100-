@@ -27,7 +27,7 @@ function formatarMes(anoMes: string) {
 }
 
 export function DetalheScreen({ route, navigation }: Props) {
-  const { matricula } = route.params;
+  const { numeroHidrometro } = route.params;
   const [hd, setHd] = useState<Hidrometro | null>(null);
   const [consumos, setConsumos] = useState<ConsumoMensal[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -37,10 +37,11 @@ export function DetalheScreen({ route, navigation }: Props) {
     setErro(null);
     try {
       const [hidrometros, historico] = await Promise.all([
-        buscarHidrometros(matricula),
-        buscarConsumoDoHd(matricula),
+        buscarHidrometros(numeroHidrometro),
+        buscarConsumoDoHd(numeroHidrometro),
       ]);
-      const encontrado = hidrometros.find((h) => h.matricula === matricula) ?? hidrometros[0] ?? null;
+      const encontrado =
+        hidrometros.find((h) => h.numero_hidrometro === numeroHidrometro) ?? hidrometros[0] ?? null;
       setHd(encontrado);
       setConsumos(historico);
     } catch (e) {
@@ -51,10 +52,10 @@ export function DetalheScreen({ route, navigation }: Props) {
   }
 
   useEffect(() => {
-    navigation.setOptions({ title: `HD ${matricula}` });
+    navigation.setOptions({ title: `HD ${numeroHidrometro}` });
     carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matricula]);
+  }, [numeroHidrometro]);
 
   if (carregando) {
     return (
@@ -81,11 +82,12 @@ export function DetalheScreen({ route, navigation }: Props) {
       refreshControl={<RefreshControl refreshing={false} onRefresh={carregar} />}
     >
       <View style={styles.cabecalho}>
-        <Text style={styles.matricula}>HD {hd.matricula}</Text>
+        <Text style={styles.numeroHidrometro}>HD {hd.numero_hidrometro}</Text>
         <StatusBadge ativo={hd.ativo} />
       </View>
       <Text style={styles.endereco}>{hd.endereco ?? "Endereço não informado"}</Text>
       {hd.bairro && <Text style={styles.bairro}>{hd.bairro}</Text>}
+      <Text style={styles.matricula}>Matrícula: {hd.matricula ?? "não informada"}</Text>
 
       <View style={styles.cardsRow}>
         <View style={styles.card}>
@@ -157,7 +159,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  matricula: {
+  numeroHidrometro: {
     fontSize: 24,
     fontWeight: "800",
     color: "#0f172a",
@@ -170,6 +172,11 @@ const styles = StyleSheet.create({
   bairro: {
     fontSize: 13,
     color: "#64748b",
+  },
+  matricula: {
+    fontSize: 13,
+    color: "#94a3b8",
+    marginTop: 4,
   },
   cardsRow: {
     flexDirection: "row",

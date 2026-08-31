@@ -8,16 +8,20 @@ do sistema da empresa (pode ser manual ou agendado, ex: cron/Task Scheduler).
 Formato esperado da planilha (.xlsx ou .csv):
 
 Aba/arquivo "hidrometros" (cadastro, uma linha por HD):
-    matricula   | endereco        | bairro   | economias | ativo
-    123456      | Rua A, 100      | Centro   | 8         | sim
+    numero_hidrometro | matricula | endereco   | bairro | economias | ativo
+    HD-000123          | 45678     | Rua A, 100 | Centro | 8         | sim
 
 Aba/arquivo "consumos" (histórico mensal, uma linha por HD/mês):
-    matricula   | ano_mes    | volume_m3
-    123456      | 2026-07    | 45.3
+    numero_hidrometro | ano_mes    | volume_m3
+    HD-000123          | 2026-07    | 45.3
 
+- "numero_hidrometro" é o número de série gravado no aparelho físico (o que o
+  vistoriante vê e digita no app em campo) — é a chave de busca.
+- "matricula" é a matrícula da economia/imóvel no sistema comercial; pode ser
+  diferente do número do hidrômetro e é opcional (pode ficar em branco).
 - "ano_mes" aceita "YYYY-MM" ou uma data completa (usa-se sempre o dia 1).
 - "ativo" aceita sim/não, s/n, true/false, 1/0 (case-insensitive).
-- Linhas com matrícula vazia são ignoradas.
+- Linhas com número de hidrômetro vazio são ignoradas.
 
 Uso:
     python import_hd.py --file planilha.xlsx
@@ -93,9 +97,10 @@ def build_hidrometros_payload(df: pd.DataFrame) -> list[dict]:
     df = df.rename(columns={c: c.strip().lower() for c in df.columns})
     rows = []
     for _, row in df.iterrows():
-        matricula = str(row.get("matricula", "")).strip()
-        if not matricula or matricula.lower() == "nan":
+        numero_hidrometro = str(row.get("numero_hidrometro", "")).strip()
+        if not numero_hidrometro or numero_hidrometro.lower() == "nan":
             continue
+        matricula = str(row.get("matricula", "")).strip()
         economias_raw = row.get("economias", 0)
         try:
             economias = int(float(economias_raw)) if pd.notna(economias_raw) else 0
@@ -103,7 +108,8 @@ def build_hidrometros_payload(df: pd.DataFrame) -> list[dict]:
             economias = 0
         rows.append(
             {
-                "matricula": matricula,
+                "numero_hidrometro": numero_hidrometro,
+                "matricula": (matricula if matricula and matricula.lower() != "nan" else None),
                 "endereco": (str(row.get("endereco", "")).strip() or None),
                 "bairro": (str(row.get("bairro", "")).strip() or None),
                 "economias": economias,
@@ -117,8 +123,8 @@ def build_consumos_payload(df: pd.DataFrame) -> list[dict]:
     df = df.rename(columns={c: c.strip().lower() for c in df.columns})
     rows = []
     for _, row in df.iterrows():
-        matricula = str(row.get("matricula", "")).strip()
-        if not matricula or matricula.lower() == "nan" or pd.isna(row.get("ano_mes")):
+        numero_hidrometro = str(row.get("numero_hidrometro", "")).strip()
+        if not numero_hidrometro or numero_hidrometro.lower() == "nan" or pd.isna(row.get("ano_mes")):
             continue
         try:
             volume = float(row.get("volume_m3", 0) or 0)
@@ -126,7 +132,7 @@ def build_consumos_payload(df: pd.DataFrame) -> list[dict]:
             volume = 0.0
         rows.append(
             {
-                "matricula": matricula,
+                "numero_hidrometro": numero_hidrometro,
                 "ano_mes": parse_ano_mes(row["ano_mes"]),
                 "volume_m3": volume,
             }
@@ -176,13 +182,19 @@ def main() -> int:
 
     if df_hd is not None:
         print(f"Lidas {len(df_hd)} linhas de hidrômetros")
-        upsert(base_url, args.supabase_key, "hidrometros", build_hidrometros_payload(df_hd), "matricula")
+        upsert(base_url, args.supabase_key, "hidrometros", build_hidrometros_payload(df_hd), "numero_hidrometro")
     else:
         print("Nenhuma aba/arquivo de hidrômetros encontrada, pulando.")
 
     if df_consumo is not None:
         print(f"Lidas {len(df_consumo)} linhas de consumo")
-        upsert(base_url, args.supabase_key, "consumos", build_consumos_payload(df_consumo), "matricula,ano_mes")
+        upsert(
+            base_url,
+            args.supabase_key,
+            "consumos",
+            build_consumos_payload(df_consumo),
+            "numero_hidrometro,ano_mes",
+        )
     else:
         print("Nenhuma aba/arquivo de consumos encontrada, pulando.")
 

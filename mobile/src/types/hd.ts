@@ -1,5 +1,6 @@
 export interface Hidrometro {
-  matricula: string;
+  numero_hidrometro: string;
+  matricula: string | null;
   endereco: string | null;
   bairro: string | null;
   economias: number;

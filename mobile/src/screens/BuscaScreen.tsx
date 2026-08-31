@@ -35,7 +35,7 @@ export function BuscaScreen({ navigation }: Props) {
       setResultados(dados);
       setPesquisou(true);
       if (dados.length === 1) {
-        navigation.navigate("Detalhe", { matricula: dados[0].matricula });
+        navigation.navigate("Detalhe", { numeroHidrometro: dados[0].numero_hidrometro });
       }
     } catch (e) {
       setErro("Não foi possível consultar o HD. Verifique sua conexão e tente novamente.");
@@ -50,13 +50,13 @@ export function BuscaScreen({ navigation }: Props) {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <Text style={styles.titulo}>Consulta de HD</Text>
-      <Text style={styles.subtitulo}>Digite a matrícula do hidrômetro para consultar</Text>
+      <Text style={styles.subtitulo}>Digite o número do hidrômetro (gravado no aparelho) para consultar</Text>
 
       <View style={styles.buscaRow}>
         <TextInput
           style={styles.input}
-          placeholder="Ex: 123456"
-          keyboardType="number-pad"
+          placeholder="Ex: HD-000123"
+          autoCapitalize="characters"
           value={termo}
           onChangeText={setTermo}
           onSubmitEditing={pesquisar}
@@ -75,20 +75,22 @@ export function BuscaScreen({ navigation }: Props) {
       {erro && <Text style={styles.erro}>{erro}</Text>}
 
       {pesquisou && !carregando && resultados.length === 0 && !erro && (
-        <Text style={styles.vazio}>Nenhum HD encontrado com essa matrícula.</Text>
+        <Text style={styles.vazio}>Nenhum HD encontrado com esse número.</Text>
       )}
 
       <FlatList
         data={resultados}
-        keyExtractor={(item) => item.matricula}
+        keyExtractor={(item) => item.numero_hidrometro}
         contentContainerStyle={{ paddingTop: 8 }}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.item}
-            onPress={() => navigation.navigate("Detalhe", { matricula: item.matricula })}
+            onPress={() =>
+              navigation.navigate("Detalhe", { numeroHidrometro: item.numero_hidrometro })
+            }
           >
             <View style={{ flex: 1 }}>
-              <Text style={styles.itemMatricula}>HD {item.matricula}</Text>
+              <Text style={styles.itemMatricula}>HD {item.numero_hidrometro}</Text>
               <Text style={styles.itemEndereco} numberOfLines={1}>
                 {item.endereco ?? "Endereço não informado"}
               </Text>

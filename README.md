@@ -1,10 +1,16 @@
 # Consulta HD — app de campo para vistoriantes
 
-App para o vistoriante consultar, em campo, dados de um HD (hidrômetro) pela
-matrícula: quantas **economias** ele atende, se está **ativo**, e o
-**consumo dos últimos 12 meses / média**. Os dados vêm de um repositório
-online (Supabase) que é atualizado a partir da planilha oficial exportada
-pela empresa.
+App para o vistoriante consultar, em campo, dados de um HD (hidrômetro) pelo
+**número gravado no aparelho**: quantas **economias** ele atende, se está
+**ativo**, e o **consumo dos últimos 12 meses / média**. Os dados vêm de um
+repositório online (Supabase) que é atualizado a partir da planilha oficial
+exportada pela empresa.
+
+> Número do hidrômetro × matrícula: são campos diferentes. O **número do
+> hidrômetro** é o de série, gravado no aparelho físico — é o que o
+> vistoriante vê no local e digita no app. A **matrícula** é o número da
+> conta/economia no sistema comercial e fica só como informação
+> complementar na tela de detalhe.
 
 ## Como as peças se conectam
 
@@ -17,7 +23,7 @@ planilha (.xlsx/.csv)  --import/import_hd.py-->  Supabase (repositório online) 
 - **`import/`** — script Python que lê a planilha exportada e atualiza o
   Supabase. Rode sempre que houver uma planilha nova.
 - **`mobile/`** — app Expo (React Native) que os vistoriantes instalam no
-  celular (Android/iOS) e usam para buscar um HD pela matrícula.
+  celular (Android/iOS) e usam para buscar um HD pelo número do aparelho.
 
 ## 1. Criar o repositório online (Supabase)
 
@@ -39,9 +45,11 @@ cp .env.example .env   # preencha SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY
 
 Monte a planilha `.xlsx` com duas abas (ou use dois `.csv` separados):
 
-- **`hidrometros`**: `matricula | endereco | bairro | economias | ativo`
-- **`consumos`**: `matricula | ano_mes | volume_m3` (uma linha por HD/mês,
-  `ano_mes` no formato `YYYY-MM`)
+- **`hidrometros`**: `numero_hidrometro | matricula | endereco | bairro | economias | ativo`
+  (`numero_hidrometro` é obrigatório e é a chave de busca no app; `matricula`
+  é opcional, é o número da conta/economia no sistema comercial)
+- **`consumos`**: `numero_hidrometro | ano_mes | volume_m3` (uma linha por
+  HD/mês, `ano_mes` no formato `YYYY-MM`)
 
 Rode a importação:
 

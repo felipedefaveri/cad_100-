@@ -1,4 +1,4 @@
 export type RootStackParamList = {
   Busca: undefined;
-  Detalhe: { matricula: string };
+  Detalhe: { numeroHidrometro: string };
 };
