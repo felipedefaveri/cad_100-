@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Consulta HD",
+    "slug": "consulta-hd",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "consulta-hd",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "br.com.suaempresa.consultahd"
+    },
+    "android": {
+      "package": "br.com.suaempresa.consultahd",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
