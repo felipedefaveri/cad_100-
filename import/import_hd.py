@@ -141,9 +141,23 @@ def parse_ano_mes(value) -> str:
     return date(d.year, d.month, 1).isoformat()
 
 
+def read_csv_robusto(caminho: str) -> pd.DataFrame:
+    """Lê CSV tentando detectar separador (',' ou ';') e codificação (utf-8/latin1)
+    automaticamente, pois exportações de sistemas brasileiros costumam vir com
+    ';' e Windows-1252/Latin-1 em vez do padrão internacional."""
+    ultimo_erro: Exception | None = None
+    for encoding in ("utf-8-sig", "latin1", "cp1252"):
+        try:
+            return pd.read_csv(caminho, dtype=str, sep=None, engine="python", encoding=encoding)
+        except (UnicodeDecodeError, UnicodeError) as e:
+            ultimo_erro = e
+            continue
+    raise ultimo_erro  # type: ignore[misc]
+
+
 def read_sheet_or_csv(file_arg: str | None, csv_arg: str | None, sheet_name: str) -> pd.DataFrame | None:
     if csv_arg:
-        return pd.read_csv(csv_arg, dtype=str)
+        return read_csv_robusto(csv_arg)
     if file_arg:
         xls = pd.ExcelFile(file_arg)
         matches = [s for s in xls.sheet_names if s.strip().lower() == sheet_name]
