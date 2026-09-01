@@ -61,9 +61,13 @@ exemplo:
     quais termos não reconheceu (e trata como ativo por padrão, pra nunca
     esconder um HD sem querer) — é só me falar o termo que eu adiciono no
     mapeamento.
-  - `CLIENTE` e o detalhamento `ECO.RES./ECO.COM./ECO.IND./ECO.PUB.` não são
-    importados por enquanto (só o total de `ECONOMIA`) — posso adicionar se
-    fizer falta.
+  - Quantidade de economias: se a planilha tiver `ECO.RES.`, `ECO.COM.`,
+    `ECO.IND.` e/ou `ECO.PUB.`, o script soma essas colunas e usa como
+    `economias` (é o que a exportação real da concessionária traz de
+    confiável). Só usa a coluna `ECONOMIA` como total pronto se nenhuma
+    dessas quatro existir na planilha.
+  - `CLIENTE` não é importado (o app não precisa do nome do cliente, só
+    dados técnicos do HD).
 - **Histórico de consumo** (aba/arquivo `consumos`) — **não vem na planilha
   de cadastro**, precisa de uma exportação separada com uma linha por
   HD/mês: `numero_hidrometro | ano_mes | volume_m3` (`ano_mes` no formato
@@ -85,6 +89,14 @@ O script faz *upsert* (atualiza quem já existe, cria quem é novo) — pode
 rodar quantas vezes quiser, sempre que sair uma planilha nova. Se quiser
 automatizar, agende esse comando (cron, Task Scheduler, GitHub Actions,
 etc.) para rodar todo dia/semana.
+
+### Atalho para reimportar sem digitar comando (Windows)
+
+O arquivo `import/atualizar_hidrometros.bat` já vem pronto: dê **2 cliques**
+nele sempre que tiver uma planilha nova, e ele roda a importação sozinho
+(usa o `.env` e o caminho de planilha já configurados). Se o caminho da
+planilha mudar, edite a linha `set PLANILHA=...` dentro do arquivo (botão
+direito → Editar, ou abra com o Bloco de Notas).
 
 ## 3. Configurar e rodar o app
 
@@ -136,6 +148,23 @@ quem você convidar).
 > `ios.bundleIdentifier` e `android.package` (ex: `br.com.suaempresa.consultahd`)
 > para usar o domínio/nome real da sua empresa, e troque os ícones em
 > `mobile/assets/`.
+
+## Como o app fica sempre atualizado
+
+O app **não guarda os dados no celular** — toda vez que o vistoriante busca
+um HD, ele consulta o Supabase na hora, ao vivo. Ou seja: assim que você
+reimporta a planilha (passo 2), a próxima busca no app já traz os dados
+novos, sem precisar reinstalar nem atualizar o `.apk`.
+
+Só é preciso gerar um `.apk` novo (passo 4) se o **código do app** mudar
+(uma tela nova, um campo a mais, etc.) — nunca por causa de dados.
+
+Por isso não existe (nem precisa existir) um botão de "atualizar banco de
+dados" dentro do app: quem atualiza o banco é sempre o script de
+importação, rodado no computador (passo 2 / atalho `.bat` acima), e o app
+só lê o que estiver lá no momento da consulta. Na tela de detalhe do HD dá
+pra "puxar para atualizar" (gesto de arrastar para baixo) caso queira forçar
+uma nova consulta sem sair da tela.
 
 ## Segurança
 

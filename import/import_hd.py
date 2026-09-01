@@ -85,6 +85,10 @@ COLUMN_ALIASES: dict[str, set[str]] = {
     },
     "matricula": {"MATRICULA", "NROLIGACAO", "NUMEROLIGACAO", "LIGACAO", "NLIGACAO"},
     "economias": {"ECONOMIA", "ECONOMIAS", "QTDECONOMIAS", "QUANTIDADEECONOMIAS"},
+    "eco_residencial": {"ECORES", "ECONOMIASRESIDENCIAL", "ECONOMIARESIDENCIAL"},
+    "eco_comercial": {"ECOCOM", "ECONOMIASCOMERCIAL", "ECONOMIACOMERCIAL"},
+    "eco_industrial": {"ECOIND", "ECONOMIASINDUSTRIAL", "ECONOMIAINDUSTRIAL"},
+    "eco_publica": {"ECOPUB", "ECONOMIASPUBLICA", "ECONOMIAPUBLICA"},
     "ativo": {"ATIVO", "SITUACAOAGUA", "SITUACAO"},
     "endereco": {"ENDERECO"},
     "logradouro": {"LOGRADOURO"},
@@ -114,6 +118,15 @@ def map_columns(columns) -> dict[str, str]:
                 resolved[campo] = normalized[alias]
                 break
     return resolved
+
+
+def parse_int(value) -> int:
+    if pd.isna(value):
+        return 0
+    try:
+        return int(float(value))
+    except (ValueError, TypeError):
+        return 0
 
 
 def parse_situacao(value, termos_desconhecidos: set[str]) -> bool:
@@ -213,13 +226,16 @@ def build_hidrometros_payload(df: pd.DataFrame) -> list[dict]:
 
         matricula = str(row.get(col.get("matricula", ""), "")).strip() if "matricula" in col else ""
 
-        economias = 0
-        if "economias" in col:
-            economias_raw = row.get(col["economias"])
-            try:
-                economias = int(float(economias_raw)) if pd.notna(economias_raw) else 0
-            except ValueError:
-                economias = 0
+        colunas_eco_por_tipo = ["eco_residencial", "eco_comercial", "eco_industrial", "eco_publica"]
+        if any(c in col for c in colunas_eco_por_tipo):
+            # Planilha tem o detalhamento por tipo de economia: soma esses
+            # campos em vez de usar a coluna "ECONOMIA" (que na exportação da
+            # concessionária costuma vir zerada/não confiável).
+            economias = sum(parse_int(row.get(col[c])) for c in colunas_eco_por_tipo if c in col)
+        elif "economias" in col:
+            economias = parse_int(row.get(col["economias"]))
+        else:
+            economias = 0
 
         ativo = parse_situacao(row.get(col["ativo"]), termos_desconhecidos) if "ativo" in col else True
 
