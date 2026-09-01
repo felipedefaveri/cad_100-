@@ -289,7 +289,31 @@ def build_hidrometros_payload(df: pd.DataFrame) -> list[dict]:
     return rows
 
 
-def build_consumos_payload(df: pd.DataFrame) -> list[dict]:
+def fetch_numeros_hidrometros_existentes(base_url: str, key: str) -> set[str]:
+    """Busca no Supabase todos os numero_hidrometro já cadastrados, paginando.
+    Usado para filtrar o CSV de consumos e não tentar gravar consumo de um HD
+    que não existe em hidrometros (evita erro de foreign key)."""
+    conhecidos: set[str] = set()
+    endpoint = f"{base_url}/rest/v1/hidrometros?select=numero_hidrometro"
+    headers = {"apikey": key, "Authorization": f"Bearer {key}"}
+    offset = 0
+    page_size = 1000
+    while True:
+        page_headers = {**headers, "Range": f"{offset}-{offset + page_size - 1}"}
+        resp = requests.get(endpoint, headers=page_headers, timeout=60)
+        if not resp.ok:
+            raise RuntimeError(f"Falha ao consultar hidrômetros existentes: {resp.status_code} {resp.text}")
+        pagina = resp.json()
+        if not pagina:
+            break
+        conhecidos.update(r["numero_hidrometro"] for r in pagina)
+        if len(pagina) < page_size:
+            break
+        offset += page_size
+    return conhecidos
+
+
+def build_consumos_payload(df: pd.DataFrame, numeros_conhecidos: set[str]) -> list[dict]:
     col = map_columns(df.columns)
     faltando = [c for c in ("numero_hidrometro", "ano_mes", "volume_m3") if c not in col]
     if faltando:
@@ -301,9 +325,13 @@ def build_consumos_payload(df: pd.DataFrame) -> list[dict]:
 
     rows = []
     linhas_com_data_invalida = 0
+    linhas_hd_desconhecido = 0
     for _, row in df.iterrows():
         numero_hidrometro = str(row.get(numero_col, "")).strip()
         if not numero_hidrometro or numero_hidrometro.lower() == "nan" or pd.isna(row.get(ano_mes_col)):
+            continue
+        if numero_hidrometro not in numeros_conhecidos:
+            linhas_hd_desconhecido += 1
             continue
         ano_mes = parse_ano_mes(row[ano_mes_col])
         if ano_mes is None:
@@ -321,6 +349,12 @@ def build_consumos_payload(df: pd.DataFrame) -> list[dict]:
             }
         )
 
+    if linhas_hd_desconhecido:
+        print(
+            f"  AVISO: {linhas_hd_desconhecido} linha(s) de consumo citam um hidrômetro que não "
+            "está cadastrado em hidrometros (removido/substituído, ou exportações de datas "
+            "diferentes) - foram ignoradas."
+        )
     if linhas_com_data_invalida:
         print(
             f"  AVISO: {linhas_com_data_invalida} linha(s) de consumo com data em formato não "
@@ -371,19 +405,27 @@ def main() -> int:
     df_hd = read_sheet_or_csv(args.file, args.hidrometros_csv, "hidrometros")
     df_consumo = read_sheet_or_csv(args.file, args.consumos_csv, "consumos")
 
+    numeros_conhecidos: set[str] | None = None
+
     if df_hd is not None:
         print(f"Lidas {len(df_hd)} linhas de hidrômetros")
-        upsert(base_url, args.supabase_key, "hidrometros", build_hidrometros_payload(df_hd), "numero_hidrometro")
+        hidrometros_rows = build_hidrometros_payload(df_hd)
+        numeros_conhecidos = {r["numero_hidrometro"] for r in hidrometros_rows}
+        upsert(base_url, args.supabase_key, "hidrometros", hidrometros_rows, "numero_hidrometro")
     else:
         print("Nenhuma aba/arquivo de hidrômetros encontrada, pulando.")
 
     if df_consumo is not None:
         print(f"Lidas {len(df_consumo)} linhas de consumo")
+        if numeros_conhecidos is None:
+            print("  Consultando hidrômetros já cadastrados no Supabase (para não gravar consumo órfão)...")
+            numeros_conhecidos = fetch_numeros_hidrometros_existentes(base_url, args.supabase_key)
+            print(f"  {len(numeros_conhecidos)} hidrômetros encontrados no Supabase.")
         upsert(
             base_url,
             args.supabase_key,
             "consumos",
-            build_consumos_payload(df_consumo),
+            build_consumos_payload(df_consumo, numeros_conhecidos),
             "numero_hidrometro,ano_mes",
         )
     else:

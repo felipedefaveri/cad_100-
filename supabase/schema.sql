@@ -34,15 +34,10 @@ comment on table public.hidrometros is 'Cadastro de hidrômetros (HDs) sincroniz
 
 create index hidrometros_matricula_idx on public.hidrometros (matricula);
 
--- Histórico de consumo mensal (para calcular últimos 12 meses e média).
--- Sem foreign key para hidrometros de propósito: a planilha de consumo pode
--- citar hidrômetros que não estão na planilha de cadastro atual (removidos,
--- substituídos, exportações de datas diferentes). Esses registros ficam
--- gravados normalmente, só não aparecem no app (a view usa LEFT JOIN a
--- partir de hidrometros).
+-- Histórico de consumo mensal (para calcular últimos 12 meses e média)
 create table public.consumos (
   id bigint generated always as identity primary key,
-  numero_hidrometro text not null,
+  numero_hidrometro text not null references public.hidrometros(numero_hidrometro) on delete cascade,
   ano_mes date not null,               -- sempre gravar como primeiro dia do mês, ex: 2026-07-01
   volume_m3 numeric(12,2) not null default 0,
   unique (numero_hidrometro, ano_mes)
