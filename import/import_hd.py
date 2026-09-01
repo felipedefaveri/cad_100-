@@ -52,6 +52,7 @@ import argparse
 import os
 import re
 import sys
+import time
 import unicodedata
 from datetime import date
 from pathlib import Path
@@ -66,7 +67,8 @@ try:
 except ImportError:
     pass
 
-CHUNK_SIZE = 500
+CHUNK_SIZE = 5000
+MAX_TENTATIVAS = 4
 
 # Termos de "SITUAÇÃO ÁGUA" (ou coluna "ativo" com texto livre) conhecidos.
 # Ajuste aqui se a concessionária usar termos diferentes destes.
@@ -323,9 +325,10 @@ def build_consumos_payload(df: pd.DataFrame, numeros_conhecidos: set[str]) -> li
         )
     numero_col, ano_mes_col, volume_col = col["numero_hidrometro"], col["ano_mes"], col["volume_m3"]
 
-    rows = []
+    linhas: dict[tuple[str, str], dict] = {}
     linhas_com_data_invalida = 0
     linhas_hd_desconhecido = 0
+    duplicatas = 0
     for _, row in df.iterrows():
         numero_hidrometro = str(row.get(numero_col, "")).strip()
         if not numero_hidrometro or numero_hidrometro.lower() == "nan" or pd.isna(row.get(ano_mes_col)):
@@ -341,13 +344,15 @@ def build_consumos_payload(df: pd.DataFrame, numeros_conhecidos: set[str]) -> li
             volume = float(row.get(volume_col, 0) or 0)
         except ValueError:
             volume = 0.0
-        rows.append(
-            {
-                "numero_hidrometro": numero_hidrometro,
-                "ano_mes": ano_mes,
-                "volume_m3": volume,
-            }
-        )
+
+        chave = (numero_hidrometro, ano_mes)
+        if chave in linhas:
+            duplicatas += 1
+        linhas[chave] = {
+            "numero_hidrometro": numero_hidrometro,
+            "ano_mes": ano_mes,
+            "volume_m3": volume,
+        }
 
     if linhas_hd_desconhecido:
         print(
@@ -361,8 +366,13 @@ def build_consumos_payload(df: pd.DataFrame, numeros_conhecidos: set[str]) -> li
             "reconhecido foram ignoradas. Me mande um exemplo do valor da coluna de data se isso "
             "não for esperado."
         )
+    if duplicatas:
+        print(
+            f"  AVISO: {duplicatas} linha(s) duplicadas (mesmo hidrômetro + mês) na planilha de "
+            "consumo - fica valendo a última ocorrência de cada uma."
+        )
 
-    return rows
+    return list(linhas.values())
 
 
 def upsert(base_url: str, key: str, table: str, rows: list[dict], on_conflict: str) -> None:
@@ -378,8 +388,23 @@ def upsert(base_url: str, key: str, table: str, rows: list[dict], on_conflict: s
     }
     for i in range(0, len(rows), CHUNK_SIZE):
         chunk = rows[i : i + CHUNK_SIZE]
-        resp = requests.post(endpoint, json=chunk, headers=headers, timeout=60)
-        if not resp.ok:
+        for tentativa in range(1, MAX_TENTATIVAS + 1):
+            try:
+                resp = requests.post(endpoint, json=chunk, headers=headers, timeout=120)
+            except requests.exceptions.RequestException as e:
+                if tentativa == MAX_TENTATIVAS:
+                    raise RuntimeError(f"Falha de rede ao gravar em {table} após {MAX_TENTATIVAS} tentativas: {e}")
+                espera = 5 * tentativa
+                print(f"  Falha de rede ({e}). Tentando de novo em {espera}s (tentativa {tentativa + 1}/{MAX_TENTATIVAS})...")
+                time.sleep(espera)
+                continue
+            if resp.ok:
+                break
+            if resp.status_code >= 500 and tentativa < MAX_TENTATIVAS:
+                espera = 5 * tentativa
+                print(f"  Erro {resp.status_code} do servidor. Tentando de novo em {espera}s...")
+                time.sleep(espera)
+                continue
             raise RuntimeError(f"Falha ao gravar em {table}: {resp.status_code} {resp.text}")
         print(f"  {table}: {min(i + CHUNK_SIZE, len(rows))}/{len(rows)} linhas enviadas")
 
