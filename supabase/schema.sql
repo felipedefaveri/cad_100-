@@ -20,7 +20,11 @@ create table public.hidrometros (
                                         -- (pode ser diferente do nº do hidrômetro)
   endereco text,                       -- endereço/local do HD
   bairro text,
-  economias integer not null default 0,-- quantidade de economias ligadas a esse HD
+  economias integer not null default 0,       -- total de economias ligadas a esse HD
+  eco_residencial integer not null default 0, -- economias residenciais
+  eco_comercial integer not null default 0,   -- economias comerciais
+  eco_industrial integer not null default 0,  -- economias industriais
+  eco_publica integer not null default 0,     -- economias públicas
   ativo boolean not null default true, -- se o HD está ativo
   observacoes text,
   atualizado_em timestamptz not null default now()
@@ -56,6 +60,10 @@ select
   h.endereco,
   h.bairro,
   h.economias,
+  h.eco_residencial,
+  h.eco_comercial,
+  h.eco_industrial,
+  h.eco_publica,
   h.ativo,
   h.atualizado_em,
   count(c.id) filter (where c.ano_mes >= (date_trunc('month', now()) - interval '11 months')) as meses_com_leitura,
@@ -68,7 +76,8 @@ select
   ) as consumo_ultimo_mes
 from public.hidrometros h
 left join public.consumos c on c.numero_hidrometro = h.numero_hidrometro
-group by h.numero_hidrometro, h.matricula, h.endereco, h.bairro, h.economias, h.ativo, h.atualizado_em;
+group by h.numero_hidrometro, h.matricula, h.endereco, h.bairro, h.economias,
+  h.eco_residencial, h.eco_comercial, h.eco_industrial, h.eco_publica, h.ativo, h.atualizado_em;
 
 -- Segurança: o app do vistoriante só pode LER dados (nunca escrever).
 -- A importação da planilha deve usar a service_role key (que ignora RLS), nunca a anon key.

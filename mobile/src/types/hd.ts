@@ -4,6 +4,10 @@ export interface Hidrometro {
   endereco: string | null;
   bairro: string | null;
   economias: number;
+  eco_residencial: number;
+  eco_comercial: number;
+  eco_industrial: number;
+  eco_publica: number;
   ativo: boolean;
   atualizado_em: string;
   meses_com_leitura: number;

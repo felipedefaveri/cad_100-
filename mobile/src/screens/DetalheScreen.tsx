@@ -108,6 +108,26 @@ export function DetalheScreen({ route, navigation }: Props) {
         </View>
       </View>
 
+      <Text style={styles.secaoTitulo}>Economias por tipo</Text>
+      <View style={styles.ecoRow}>
+        <View style={styles.ecoItem}>
+          <Text style={styles.ecoValor}>{hd.eco_residencial}</Text>
+          <Text style={styles.ecoLabel}>ECO.RES.</Text>
+        </View>
+        <View style={styles.ecoItem}>
+          <Text style={styles.ecoValor}>{hd.eco_comercial}</Text>
+          <Text style={styles.ecoLabel}>ECO.COM.</Text>
+        </View>
+        <View style={styles.ecoItem}>
+          <Text style={styles.ecoValor}>{hd.eco_industrial}</Text>
+          <Text style={styles.ecoLabel}>ECO.IND.</Text>
+        </View>
+        <View style={styles.ecoItem}>
+          <Text style={styles.ecoValor}>{hd.eco_publica}</Text>
+          <Text style={styles.ecoLabel}>ECO.PUB.</Text>
+        </View>
+      </View>
+
       <Text style={styles.secaoTitulo}>Consumo — últimos 12 meses</Text>
 
       {consumos.length === 0 ? (
@@ -202,6 +222,29 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginTop: 4,
     textAlign: "center",
+  },
+  ecoRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  ecoItem: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  ecoValor: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  ecoLabel: {
+    fontSize: 10,
+    color: "#64748b",
+    marginTop: 2,
   },
   secaoTitulo: {
     fontSize: 16,

@@ -246,6 +246,10 @@ def build_hidrometros_payload(df: pd.DataFrame) -> list[dict]:
                 "endereco": montar_endereco(row, col),
                 "bairro": (str(row.get(col.get("bairro", ""), "")).strip() or None) if "bairro" in col else None,
                 "economias": economias,
+                "eco_residencial": parse_int(row.get(col["eco_residencial"])) if "eco_residencial" in col else 0,
+                "eco_comercial": parse_int(row.get(col["eco_comercial"])) if "eco_comercial" in col else 0,
+                "eco_industrial": parse_int(row.get(col["eco_industrial"])) if "eco_industrial" in col else 0,
+                "eco_publica": parse_int(row.get(col["eco_publica"])) if "eco_publica" in col else 0,
                 "ativo": ativo,
             }
         )
