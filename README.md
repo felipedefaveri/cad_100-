@@ -92,11 +92,13 @@ etc.) para rodar todo dia/semana.
 
 ### Atalho para reimportar sem digitar comando (Windows)
 
-O arquivo `import/atualizar_hidrometros.bat` já vem pronto: dê **2 cliques**
-nele sempre que tiver uma planilha nova, e ele roda a importação sozinho
-(usa o `.env` e o caminho de planilha já configurados). Se o caminho da
-planilha mudar, edite a linha `set PLANILHA=...` dentro do arquivo (botão
-direito → Editar, ou abra com o Bloco de Notas).
+O arquivo `import/atualizar_dados.bat` já vem pronto: dê **2 cliques** nele
+sempre que tiver planilha nova (de hidrômetros e/ou consumo), e ele roda a
+importação dos dois sozinho (usa o `.env` já configurado). Se o consumo
+ainda não existir no caminho configurado, ele importa só os hidrômetros e
+avisa, sem dar erro. Se algum caminho mudar, edite as linhas `set
+HD_CSV=...` / `set CONSUMO_CSV=...` dentro do arquivo (botão direito →
+Editar, ou abra com o Bloco de Notas).
 
 ## 3. Configurar e rodar o app
 
