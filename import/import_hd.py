@@ -95,6 +95,8 @@ COLUMN_ALIASES: dict[str, set[str]] = {
     "logradouro_numero": {"LOGRADOURONUMERO"},
     "logradouro_complemento": {"LOGRADOUROCOMPLEMENTO", "COMPLEMENTO"},
     "bairro": {"BAIRRO"},
+    "ano_mes": {"ANOMES", "MESREFERENCIA", "MESANO", "COMPETENCIA", "REFERENCIA"},
+    "volume_m3": {"VOLUMEM3", "VOLUME", "CONSUMOM3", "CONSUMO", "M3"},
 }
 
 
@@ -143,15 +145,38 @@ def parse_situacao(value, termos_desconhecidos: set[str]) -> bool:
     return True
 
 
-def parse_ano_mes(value) -> str:
+def parse_ano_mes(value) -> str | None:
+    """Converte YYYY-MM, MM/YYYY, YYYY/MM ou uma data completa para 'YYYY-MM-01'.
+    Retorna None se não conseguir reconhecer o valor (linha suja/dado inválido),
+    em vez de derrubar a importação inteira por causa de uma célula ruim."""
     if isinstance(value, (pd.Timestamp, date)):
-        d = value
+        return date(value.year, value.month, 1).isoformat()
+
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return None
+
+    m = re.match(r"^(\d{4})-(\d{1,2})$", text)
+    if m:
+        ano, mes = int(m.group(1)), int(m.group(2))
     else:
-        text = str(value).strip()
-        if len(text) == 7:  # YYYY-MM
-            text = f"{text}-01"
-        d = pd.to_datetime(text)
-    return date(d.year, d.month, 1).isoformat()
+        m = re.match(r"^(\d{1,2})/(\d{4})$", text)
+        if m:
+            ano, mes = int(m.group(2)), int(m.group(1))
+        else:
+            m = re.match(r"^(\d{4})/(\d{1,2})$", text)
+            if m:
+                ano, mes = int(m.group(1)), int(m.group(2))
+            else:
+                try:
+                    d = pd.to_datetime(text, dayfirst=True)
+                    ano, mes = d.year, d.month
+                except (ValueError, TypeError):
+                    return None
+
+    if not (1 <= mes <= 12):
+        return None
+    return date(ano, mes, 1).isoformat()
 
 
 def read_csv_robusto(caminho: str) -> pd.DataFrame:
@@ -266,19 +291,23 @@ def build_hidrometros_payload(df: pd.DataFrame) -> list[dict]:
 
 def build_consumos_payload(df: pd.DataFrame) -> list[dict]:
     col = map_columns(df.columns)
-    numero_col = col.get("numero_hidrometro", "numero_hidrometro")
-    ano_mes_col = "ano_mes" if "ano_mes" in df.columns else None
-    volume_col = "volume_m3" if "volume_m3" in df.columns else None
-    if numero_col not in df.columns or ano_mes_col is None or volume_col is None:
+    faltando = [c for c in ("numero_hidrometro", "ano_mes", "volume_m3") if c not in col]
+    if faltando:
         raise SystemExit(
             "A aba/arquivo de consumos precisa das colunas: numero_hidrometro, ano_mes, volume_m3. "
-            f"Colunas encontradas: {list(df.columns)}"
+            f"Não encontrei: {faltando}. Colunas encontradas: {list(df.columns)}"
         )
+    numero_col, ano_mes_col, volume_col = col["numero_hidrometro"], col["ano_mes"], col["volume_m3"]
 
     rows = []
+    linhas_com_data_invalida = 0
     for _, row in df.iterrows():
         numero_hidrometro = str(row.get(numero_col, "")).strip()
         if not numero_hidrometro or numero_hidrometro.lower() == "nan" or pd.isna(row.get(ano_mes_col)):
+            continue
+        ano_mes = parse_ano_mes(row[ano_mes_col])
+        if ano_mes is None:
+            linhas_com_data_invalida += 1
             continue
         try:
             volume = float(row.get(volume_col, 0) or 0)
@@ -287,10 +316,18 @@ def build_consumos_payload(df: pd.DataFrame) -> list[dict]:
         rows.append(
             {
                 "numero_hidrometro": numero_hidrometro,
-                "ano_mes": parse_ano_mes(row[ano_mes_col]),
+                "ano_mes": ano_mes,
                 "volume_m3": volume,
             }
         )
+
+    if linhas_com_data_invalida:
+        print(
+            f"  AVISO: {linhas_com_data_invalida} linha(s) de consumo com data em formato não "
+            "reconhecido foram ignoradas. Me mande um exemplo do valor da coluna de data se isso "
+            "não for esperado."
+        )
+
     return rows
 
 
