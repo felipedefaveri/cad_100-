@@ -55,7 +55,7 @@ header.top p{margin:2px 0 0;color:var(--muted);font-size:13px;}
 .kpi{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);}
 .kpi.sim{border-top-color:var(--csim);}
 .kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
-.kpi .v{font-size:24px;font-weight:700;color:var(--kpi);margin:2px 0;font-variant-numeric:tabular-nums;}
+.kpi .v{font-size:22px;letter-spacing:-.2px;font-weight:700;color:var(--kpi);margin:2px 0;font-variant-numeric:tabular-nums;}
 .kpi .s{font-size:12px;color:var(--muted);}
 .kpi .bd{display:flex;gap:6px 10px;flex-wrap:wrap;}
 .kpi .bd:not(:empty){margin-top:8px;padding-top:8px;border-top:1px solid var(--line);}
@@ -161,7 +161,7 @@ details.how ul{margin:8px 0 0;padding-left:20px;color:var(--ink);} details.how l
 footer{margin-top:16px;color:var(--muted);font-size:12px;overflow-wrap:anywhere;}
 .imp .src,.status,.hint,header.top p{overflow-wrap:anywhere;}
 @media (max-width:900px){ .kpis{grid-template-columns:repeat(2,1fr);} .grid2{grid-template-columns:1fr;} }
-@media (max-width:480px){ .kpis{grid-template-columns:1fr;} .kpi .v{font-size:21px;} .app{padding:10px 10px 32px;} }
+@media (max-width:480px){ .kpis{grid-template-columns:1fr;} .kpi .v{font-size:20px;} .app{padding:10px 10px 32px;} }
 /* ===== v13: barra fixa, cenários, ajustes ativos, comparativo consolidado, filtro, gráfico mensal ===== */
 .sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:none;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--csim);border-radius:10px;padding:8px 14px;margin-top:10px;box-shadow:0 6px 16px rgba(13,43,69,.16);gap:6px 18px;align-items:center;flex-wrap:wrap;font-size:13px;font-variant-numeric:tabular-nums;}
 .sticky.show{display:flex;}
@@ -752,7 +752,7 @@ var nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFrac
 var nf1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 function f0(x) { return nf0.format(Math.round(x)); }
 function f2(x) { return isFinite(x) ? nf2.format(x) : '–'; }
-function mi(x) { return 'R$ ' + nf1.format(x / 1e6) + ' mi'; }
+function mi(x) { return 'R$ ' + f0(x); }            // valores de receita sempre por extenso (sem abreviar em "mi")
 function pc(x) { return isFinite(x) ? (x >= 0 ? '+' : '−') + nf2.format(Math.abs(x) * 100) + '%' : '–'; }
 function sgn(x, fn) { return (x >= 0 ? '+' : '−') + fn(Math.abs(x)); }
 function cls(x) { return Math.abs(x) < 1e-9 ? '' : (x > 0 ? 'pos' : 'neg'); }
