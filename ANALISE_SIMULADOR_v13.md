@@ -36,3 +36,15 @@ Resultado: `simulador_faturamento_13.html` (mesma lógica de cálculo; só apres
 
 ## Validação
 Testado em Chromium headless (Playwright): carregamento sem erros, edição por linha e por célula, desfazer, salvar/carregar/remover cenário, remover ajuste, filtro, barra fixa, gráfico mensal, exportação Excel, "Salvar simulador" e reabertura do arquivo salvo (cenários e dados preservados), importação da planilha enviada.
+
+## v14 — mais próximo de um sistema (só interface)
+
+| Recurso | O que faz |
+|---|---|
+| **Etapas no topo** (Dados → Base 2026 → Simular → Comparar cenários → Exportar/salvar) | Mostram o andamento (✓ quando feito, com o status em texto) e levam à parte certa da tela ao clicar. |
+| **Simulação rápida** | Formulário: segmento, categoria, tarifa, mês e % de variação do consumo médio (com atalhos ±1/2/5%). Prévia do efeito em R$ antes de aplicar. Usa `setUniform` + `monthDetail`, o mesmo caminho da "Variação em todas". |
+| **Dicas em cada campo** | Passar o mouse (ou focar) em qualquer título de coluna, campo editável, KPI ou seção mostra o que é e como usar; campos editáveis mostram também o valor base. Pode ser desligado no cabeçalho. |
+| **Passo a passo** | Tour de 13 passos com destaque na própria tela (setas ← →, Esc fecha). Oferecido na primeira abertura; botão no cabeçalho para repetir. |
+| **Glossário** | Seção no fim com todos os termos (ECO FAT, MED P/ECO, VOL FAT, FAT P/ECO, faixa, Q x P, base, simulado, fator, cenário…). |
+
+Validado em Chromium headless: regressão da v13 completa + dicas (cabeçalho, campo, KPI), simulação rápida (prévia e aplicação), tour completo, navegação por etapas, marcação da etapa 5 ao exportar, desligar dicas, importação atualizando a lista de tarifas.
