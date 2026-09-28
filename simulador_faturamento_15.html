@@ -254,7 +254,8 @@ table.y26t tr.calc td{color:var(--muted);font-size:12px;}
 table.y26t tr.tot td{font-weight:700;color:var(--ink);}
 table.y26t th.cat{min-width:190px;}
 details.y26d>summary{border-left-color:var(--c26);}
-.t input.i26.inactive,table.cmp.mini input.t26.inactive{opacity:.6;font-style:italic;background:var(--tint);}
+.t td.edit input.y26c{width:96px;color:var(--blue);}
+table.cmp.mini input.y26t{width:80px;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:var(--input);color:var(--blue);font:inherit;text-align:right;}
 </style>
 </head>
 <body>
@@ -863,9 +864,9 @@ function gridHtml(key, gi, title, rows) {
 function cmp26Row(key, gp, tname, code, label, aria, bold) {
   var pfx = gp + code, cls_ = bold ? ' class="tot"' : '';
   return '<tr' + cls_ + '><th scope="row" class="cat">' + esc(label) + '</th>' +
-    '<td class="in"><input type="number" step="0.01" class="t26" data-k="' + key + '" data-g="' + esc(tname) + '" data-c="' + code + '" data-f="med" aria-label="MED P/ECO 2026 de ' + esc(aria) + '"></td><td id="' + pfx + 'M27"></td><td id="' + pfx + 'DM"></td>' +
-    '<td class="in"><input type="number" step="0.01" class="t26" data-k="' + key + '" data-g="' + esc(tname) + '" data-c="' + code + '" data-f="fat" aria-label="FAT P/ECO 2026 de ' + esc(aria) + '"></td><td id="' + pfx + 'F27"></td><td id="' + pfx + 'DF"></td>' +
-    '<td class="in wide"><input type="number" step="1" class="t26" data-k="' + key + '" data-g="' + esc(tname) + '" data-c="' + code + '" data-f="val" aria-label="Valor 2026 de ' + esc(aria) + '"></td><td id="' + pfx + 'V27B"></td><td id="' + pfx + 'V27S"></td><td id="' + pfx + 'DR"></td><td id="' + pfx + 'DP"></td></tr>';
+    '<td class="in"><input type="number" step="0.01" min="0" class="y26t" data-k="' + key + '" data-g="' + esc(tname) + '" data-c="' + code + '" data-f="med" aria-label="MED P/ECO 2026 de ' + esc(aria) + '"></td><td id="' + pfx + 'M27"></td><td id="' + pfx + 'DM"></td>' +
+    '<td id="' + pfx + 'F26"></td><td id="' + pfx + 'F27"></td><td id="' + pfx + 'DF"></td>' +
+    '<td id="' + pfx + 'V26"></td><td id="' + pfx + 'V27B"></td><td id="' + pfx + 'V27S"></td><td id="' + pfx + 'DR"></td><td id="' + pfx + 'DP"></td></tr>';
 }
 function buildTariffs(key) {
   var seg = S.seg[key], defs = [], h = '', withData = {};
@@ -923,8 +924,8 @@ function buildPanel(key) {
        '<label>Filtrar <input type="search" id="filt-' + key + '" placeholder="nome da tarifa" aria-label="Filtrar tarifas pelo nome"></label><label class="chk"><input type="checkbox" id="filta-' + key + '"> só ajustadas</label><span class="hint" id="filtn-' + key + '"></span></div>';
   h += '<div id="tars-' + key + '">' + T.html + '</div></div>';
   h += '<div class="card"><div class="card-h"><h2>2 · CONSOLIDADO MÊS A MÊS · ' + SEG_LABEL[key] + '</h2><span class="hint" id="cm-' + key + '-t"></span></div>' + monthGridConsolidado(key) + '</div>';
-  h += '<div class="card"><div class="card-h"><h2>3 · RESUMO CONSOLIDADO · ' + SEG_LABEL[key] + '</h2><span class="hint">VOL MED e MED P/ECO simulados e os valores de <span class="blue">2026</span> são editáveis · a mudança de volume se propaga a todas as tarifas, faixas e meses · 2026 digitado: <span class="pill" id="y26s3-' + key + '"></span></span></div>';
-  h += '<div class="scroll"><table class="t sim"><thead><tr><th rowspan="2">CATEGORIA</th><th colspan="9" class="g">2027 · SIMULAÇÃO</th><th colspan="3" class="g">2026 (digite)</th></tr><tr><th>ECO FAT</th><th class="edit-h">VOL MED<br><small>simulado</small></th><th>VOL FAT</th><th>VALOR FAT</th><th>MED P/ECO<br><small>base</small></th><th class="edit-h">MED P/ECO<br><small>simulado</small></th><th>Δ consumo</th><th>FAT P/ECO</th><th>Δ valor × base</th><th>MED P/ECO</th><th>FAT P/ECO</th><th>VALOR</th></tr></thead><tbody>';
+  h += '<div class="card"><div class="card-h"><h2>3 · RESUMO CONSOLIDADO · ' + SEG_LABEL[key] + '</h2><span class="hint">VOL MED e MED P/ECO simulados (2027) e MED P/ECO e VOL MED de <span class="blue">2026</span> são editáveis · a mudança de volume se propaga a todas as tarifas, faixas e meses do ano correspondente; em 2026, FAT P/ECO e VALOR recalculam na hora (seção 5)</span></div>';
+  h += '<div class="scroll"><table class="t sim"><thead><tr><th rowspan="2">CATEGORIA</th><th colspan="9" class="g">2027 · SIMULAÇÃO</th><th colspan="4" class="g">2026 · BASE POR FAIXA E MÊS (seção 5)</th></tr><tr><th>ECO FAT</th><th class="edit-h">VOL MED<br><small>simulado</small></th><th>VOL FAT</th><th>VALOR FAT</th><th>MED P/ECO<br><small>base</small></th><th class="edit-h">MED P/ECO<br><small>simulado</small></th><th>Δ consumo</th><th>FAT P/ECO</th><th>Δ valor × base</th><th class="edit-h">MED P/ECO<br><small>2026</small></th><th class="edit-h">VOL MED<br><small>2026</small></th><th>FAT P/ECO<br><small>2026</small></th><th>VALOR<br><small>2026</small></th></tr></thead><tbody>';
   CATS.concat(['TOT']).forEach(function (c) {
     var tot = c === 'TOT', id = key + '-' + c + '-', lab = tot ? 'TOTAL' : CAT_NAMES[c];
     h += '<tr class="' + (tot ? 'tot' : '') + '"><th scope="row" class="cat">' + lab + '</th><td id="' + id + 'E"></td>' +
@@ -932,11 +933,11 @@ function buildPanel(key) {
       '<td id="' + id + 'FAT"></td><td id="' + id + 'VAL"></td><td id="' + id + 'MEDB"></td>' +
       '<td class="edit"><input type="number" step="0.01" min="0" class="cv" id="' + id + 'MEDin" data-k="' + key + '" data-c="' + c + '" data-f="med" aria-label="MED P/ECO simulado ' + lab + '"></td>' +
       '<td id="' + id + 'DK"></td><td id="' + id + 'FPE"></td><td id="' + id + 'DV"></td>' +
-      '<td class="in"><input type="number" step="0.01" class="i26" data-k="' + key + '" data-c="' + c + '" data-i="0" aria-label="MED P/ECO 2026 ' + lab + '"></td>' +
-      '<td class="in"><input type="number" step="0.01" class="i26" data-k="' + key + '" data-c="' + c + '" data-i="1" aria-label="FAT P/ECO 2026 ' + lab + '"></td>' +
-      '<td class="in wide"><input type="number" step="1" class="i26" data-k="' + key + '" data-c="' + c + '" data-i="2" aria-label="Valor 2026 ' + lab + '"></td></tr>';
+      '<td class="edit"><input type="number" step="0.01" min="0" class="y26c" data-k="' + key + '" data-c="' + c + '" data-f="med" aria-label="MED P/ECO 2026 ' + lab + '"></td>' +
+      '<td class="edit"><input type="number" step="any" min="0" class="y26c" data-k="' + key + '" data-c="' + c + '" data-f="vm" aria-label="VOL MED 2026 ' + lab + '"></td>' +
+      '<td id="' + id + 'F26v"></td><td id="' + id + 'V26v"></td></tr>';
   });
-  h += '</tbody></table></div><div class="foot"><button type="button" class="btn ghost" data-r26="' + key + '">Restaurar 2026 original</button></div></div>';
+  h += '</tbody></table></div><div class="foot"><button type="button" class="btn ghost" data-y26clear="' + key + '">Voltar 2026 ao padrão (volumes da planilha à tarifa 2026)</button></div></div>';
   h += '<div class="card"><div class="card-h"><h2>4 · COMPARAÇÃO COM O ANO ANTERIOR · ' + SEG_LABEL[key] + '</h2><span class="hint">2026 vem do resumo consolidado acima</span></div>';
   h += '<div class="scroll"><table class="t cmp"><thead><tr><th rowspan="2">CATEGORIA</th><th colspan="3" class="g">Δ MEDIDO P/ECO</th><th colspan="3" class="g">Δ FATURADO P/ECO</th><th colspan="5" class="g">VALOR DE FATURAMENTO</th></tr>' +
        '<tr><th>2026</th><th>2027 sim.</th><th>Δ</th><th>2026</th><th>2027 sim.</th><th>Δ</th><th>2026</th><th>2027 base</th><th>2027 sim.</th><th>Δ R$</th><th>Δ %</th></tr></thead><tbody>';
@@ -951,7 +952,7 @@ function buildPanel(key) {
   h += '<div class="card y26"><div class="card-h"><h2>5 · BASE 2026 POR TARIFA, FAIXA E MÊS · ' + SEG_LABEL[key] + '</h2><span class="hint" id="y26h-' + key + '"></span></div>' +
     '<div class="y26note"><b>Economias</b>, <b>volume medido</b> e <b>tarifa</b> de 2026 (sem o reajuste de 2027) por faixa e mês. A base já vem preenchida com os volumes e economias da planilha à tarifa de 2026; qualquer ajuste aqui recalcula VOL FAT, VALOR FATURADO e FAT P/ECO com a mesma regra escalonada de 2027 e <b>reflete na hora</b> em tudo que compara com 2026 (KPIs, comparativo consolidado, cenários, gráficos e Excel). ' +
     'Para colocar o realizado: <b>cole do Excel</b> (clique na célula inicial e Ctrl+V — o bloco preenche os meses à direita e as linhas abaixo), <b>importe</b> uma planilha LeverPro com colunas de 2026 (Jan-2026 … Dez-2026) ou o <b>modelo</b> gerado aqui já preenchido.</div>' +
-    '<div class="y26bar"><span class="lbl" style="font-weight:700;font-size:13px">2026 usado nos indicadores:</span><label class="chk" style="display:inline-flex;align-items:center;gap:5px"><input type="radio" name="y26mode-' + key + '" value="detail"> detalhado (esta seção)</label><label class="chk" style="display:inline-flex;align-items:center;gap:5px"><input type="radio" name="y26mode-' + key + '" value="typed"> digitado por categoria (seção 3)</label>' +
+    '<div class="y26bar"><span class="pill">é a única fonte do 2026: tudo que compara com 2026 usa estes números, e os campos de 2026 da seção 3 e da comparação por tarifa também editam esta base</span>' +
     '<span class="pill warn" id="y26w-' + key + '" hidden title="A planilha embutida deste segmento não tem colunas de 2026; a tarifa começou igual à de 2027. Importe o LeverPro deste segmento (que tenha meses de 2026) ou edite as linhas de tarifa.">tarifa 2026 não encontrada — usando a de 2027</span></div>' +
     '<div class="y26bar"><label class="filebtn">Importar planilha 2026<input type="file" accept=".xlsx,.xlsm" data-k26="' + key + '"></label><button type="button" class="btn ghost" data-y26tpl="' + key + '">Baixar modelo (Excel)</button>' +
     '<button type="button" class="btn ghost" data-y26fold="' + key + '" data-open="1">Expandir</button><button type="button" class="btn ghost" data-y26fold="' + key + '" data-open="0">Recolher</button><button type="button" class="btn danger" data-y26clear="' + key + '">Voltar ao padrão</button><span class="status" id="st26-' + key + '"></span></div>' +
@@ -965,7 +966,6 @@ function buildAll() {
   $('panels').innerHTML = buildPanel('agua') + buildPanel('esgoto');
   ['agua', 'esgoto'].forEach(function (key) {
     ['RES', 'COM', 'IND', 'PUB', 'TOT'].forEach(function (c) {
-      ['0', '1', '2'].forEach(function (i) { document.querySelector('.i26[data-k="' + key + '"][data-c="' + c + '"][data-i="' + i + '"]').value = S.b26[key][c][+i]; });
     });
   });
   showTab(S.active); setMetric(S.metric, true);
@@ -1076,10 +1076,7 @@ function update() {
       var t26all = S.tar26[key][g.name] || (S.tar26[key][g.name] = {});
       function cmpRow(code, E, VM, VMs, FAT, FATs, VAL, VALs) {
         var pfx = gp + code, t26 = effTar26(key, g.name, code), medS = E ? VMs / E : NaN, fatS = E ? FATs / E : NaN;
-        ['med', 'fat', 'val'].forEach(function (f) {
-          var el = document.querySelector('.t26[data-k="' + key + '"][data-g="' + CSS.escape(g.name) + '"][data-c="' + code + '"][data-f="' + f + '"]');
-          if (el && document.activeElement !== el) el.value = t26[f] != null ? (t26.det ? Math.round(t26[f] * 100) / 100 : t26[f]) : '';
-        });
+        $(pfx + 'F26').textContent = t26.fat != null ? f2(t26.fat) : '–'; $(pfx + 'V26').textContent = t26.val != null ? f0(t26.val) : '–';
         $(pfx + 'M27').textContent = E ? f2(medS) : '–'; $(pfx + 'DM').innerHTML = dpc(t26.med ? medS / t26.med - 1 : NaN);
         $(pfx + 'F27').textContent = E ? f2(fatS) : '–'; $(pfx + 'DF').innerHTML = dpc(t26.fat ? fatS / t26.fat - 1 : NaN);
         $(pfx + 'V27B').textContent = f0(VAL); $(pfx + 'V27S').innerHTML = '<b>' + f0(VALs) + '</b>';
@@ -1114,7 +1111,6 @@ function update() {
       $(id + 'FPE').textContent = E ? f2(r.FATs / E) : '–';
       var dv = r.VALs - r.VAL; $(id + 'DV').innerHTML = Math.abs(dv) < 0.5 ? '<span class="muted">–</span>' : '<span class="' + cls(dv) + '">' + sgn(dv, f0) + '</span>';
       var m26 = +b26[c][0], f26 = +b26[c][1], v26 = +b26[c][2], ff27 = E ? r.FATs / E : NaN;
-      ['0', '1', '2'].forEach(function (i) { var el = document.querySelector('.i26[data-k="' + key + '"][data-c="' + c + '"][data-i="' + i + '"]'); if (document.activeElement !== el) el.value = b26._det[c] ? Math.round(b26[c][+i] * 100) / 100 : S.b26[key][c][+i]; });
       $(id + 'M26').textContent = f2(m26); $(id + 'F26').textContent = f2(f26); $(id + 'V26').textContent = f0(v26);
       $(id + 'M27').textContent = E ? f2(medS) : '–'; $(id + 'DM').innerHTML = dpc(medS / m26 - 1);
       $(id + 'F27').textContent = E ? f2(ff27) : '–'; $(id + 'DF').innerHTML = dpc(ff27 / f26 - 1);
@@ -1732,7 +1728,9 @@ var HELP = {
   'VALOR DE FATURAMENTO': { t: 'Valor de faturamento', d: '2026 digitado, 2027 base e 2027 simulado, lado a lado.' },
   'VALOR BASE': { t: 'Valor base', d: 'Valor faturado da planilha para a faixa/mês do ajuste.' },
   'TARIFA · CATEGORIA': { t: 'Tarifa · categoria', d: 'Onde o ajuste foi feito. A bolinha indica ÁGUA (verde) ou ESGOTO (amarelo).' },
-  '2026 (DIGITE)': { t: '2026 (digite)', d: 'Campos azuis: MED P/ECO, FAT P/ECO e VALOR realizados em 2026, por categoria. Ficam guardados neste navegador e vão no "Salvar simulador".' },
+  '2026 · BASE POR FAIXA E MÊS (SEÇÃO 5)': { t: '2026 · base por faixa e mês', d: 'MED P/ECO e VOL MED de 2026 são editáveis e reescrevem os volumes da base 2026 (seção 5); FAT P/ECO e VALOR recalculam com a regra escalonada. Um número está ligado ao outro.' },
+  'in.y26c.med': { t: 'MED P/ECO 2026 (editável)', d: 'Consumo médio por economia em 2026. Ao digitar, os volumes de todas as tarifas, faixas e meses dessa categoria (ou tarifa) são escalados na mesma proporção; FAT P/ECO, VALOR, KPIs e comparativos recalculam na hora.' },
+  'in.y26c.vm': { t: 'VOL MED 2026 (editável)', d: 'Volume medido total de 2026. Ao digitar, os volumes por faixa e mês são escalados na mesma proporção; o resto recalcula.' },
   '2027 · SIMULAÇÃO': { t: '2027 · simulação', d: 'Colunas calculadas para 2027; as marcadas em verde são editáveis.' },
   'ANO': { t: 'ANO', d: 'Total (ou média) Jan–Dez. Editar aqui aplica o mesmo fator a todos os 12 meses da linha.' },
   'CENÁRIO_H': { t: 'Cenário', d: 'Nome e hora em que foi salvo. "atual" marca o que está carregado agora.' },
@@ -1792,6 +1790,7 @@ function helpFor(el) {
   if (el.tagName === 'INPUT') {
     var c = el.classList;
     if (c.contains('y26in')) return HELP['in.y26.' + el.dataset.f];
+    if (c.contains('y26c') || c.contains('y26t')) return HELP['in.y26c.' + el.dataset.f];
     if (c.contains('gi')) return HELP['in.gi.' + (S.metric === 'vm' ? 'vm' : 'med')];
     if (c.contains('cm')) return HELP['in.cm.' + (S.metric === 'vm' ? 'vm' : 'med')];
     if (c.contains('cv')) return HELP['in.cv.' + el.dataset.f];
@@ -1867,8 +1866,8 @@ function renderSteps() {
   var n = activeCount('agua') + activeCount('esgoto');
   function st(i, done, txt) { var b = document.querySelector('.steps [data-step="' + i + '"]'); b.classList.toggle('done', !!done); $('stp-' + i).textContent = txt; }
   st(1, true, imp.length ? 'importado: ' + imp.map(function (k) { return SEG_LABEL[k]; }).join(' e ') : 'usando dados embutidos');
-  var modes = ['agua', 'esgoto'].map(function (k) { return CACHE26[k] && CACHE26[k].mode === 'detail' ? SEG_LABEL[k] + ' detalhado' + (CACHE26[k].edited ? ' (' + CACHE26[k].edited + ' editada(s))' : ' (padrão)') : SEG_LABEL[k] + ' digitado'; });
-  st(2, has26, modes.join(' · '));
+  var ed26 = ['agua', 'esgoto'].map(function (k) { return SEG_LABEL[k] + ': ' + (CACHE26[k] && CACHE26[k].edited ? CACHE26[k].edited + ' editada(s)/importada(s)' : 'padrão (planilha à tarifa 2026)'); });
+  st(2, has26, ed26.join(' · '));
   st(3, n > 0, n ? n + (n === 1 ? ' tarifa/categoria ajustada' : ' tarifas/categorias ajustadas') : 'sem ajustes ainda');
   st(4, S.scen.length > 0, S.scen.length ? S.scen.length + (S.scen.length === 1 ? ' cenário salvo' : ' cenários salvos') : 'salve um cenário para comparar');
   st(5, S.flags.exported, S.flags.exported ? 'exportado nesta sessão' : 'Excel ou simulador (HTML)');
@@ -2014,45 +2013,48 @@ function y26Default(b) {
 }
 function y26Get(key, b, create) { var k = y26Key(b), e = S.y26[key][k]; if (!e && create) e = S.y26[key][k] = y26Default(b); return e; }
 function y26HasData(e) { return !!e; }        // entrada guardada = bloco editado/importado
-function y26Mode(key) { var m = S.y26._mode && S.y26._mode[key]; return m || 'typed'; }   // padrão: os 3 campos digitados por categoria
-function setY26Mode(key, mode) { S.y26._mode = S.y26._mode || {}; S.y26._mode[key] = mode; y26AfterEdit(); }
-/* a origem do 2026 segue onde o usuário mexeu por último: seção 5 -> detalhado; seção 3 (campos azuis) -> digitado */
-function y26Ensure(key, mode) {
-  if (y26Mode(key) === mode) return;
-  S.y26._mode = S.y26._mode || {}; S.y26._mode[key] = mode;
-  toastMsg(mode === 'detail' ? SEG_LABEL[key] + ': os indicadores de 2026 passaram a usar a base detalhada por faixa e mês (seção 5).' : SEG_LABEL[key] + ': os indicadores de 2026 passaram a usar os valores digitados por categoria (seção 3).', 'ok');
-}
+/* Um único 2026: a base por faixa × mês (seção 5) é a fonte de tudo. Editar em qualquer nível (célula, tarifa, categoria, total)
+   reescreve os volumes dessa base, e todos os indicadores de 2026 (KPIs, comparativos, seção 3, por tarifa, gráficos, Excel) recalculam. */
+function y26Mode() { return 'detail'; }
+function y26Ensure() { }
+function y26ModeLabel() { return 'base por faixa e mês'; }
 function z4() { return { E: 0, VM: 0, FAT: 0, VAL: 0 }; }
 function compute26(key) {
-  var seg = S.seg[key], R = { blocks: {}, cats: {}, tot: z4(), groups: {}, has: false, n: 0, edited: 0, mode: y26Mode(key) };
+  var seg = S.seg[key], R = { blocks: {}, cats: {}, tot: z4(), groups: {}, has: true, n: 0, edited: 0, mode: 'detail' };
   CATS.forEach(function (c) { R.cats[c] = z4(); });
-  if (R.mode !== 'detail') return R;
   seg.blocks.forEach(function (b) {
-    var e = S.y26[key][y26Key(b)]; if (e) R.edited++; else e = y26Default(b);
+    var e = S.y26[key][y26Key(b)], edited = !!e; if (!e) e = y26Default(b); if (edited) R.edited++;
     var months = e.m.map(function (inp) { return recalcMonth(b, inp); }), t = z4();
     months.forEach(function (M) { t.E += M.E; t.VM += M.VM; t.FAT += M.FAT; t.VAL += M.VAL; });
-    t.months = months; R.blocks[b.id] = t; R.has = true; R.n++;
+    t.months = months; t.edited = edited; R.blocks[b.id] = t; R.n++;
     var g = R.groups[b.sec] || (R.groups[b.sec] = z4());
     ['E', 'VM', 'FAT', 'VAL'].forEach(function (f) { R.cats[b.cat][f] += t[f]; R.tot[f] += t[f]; g[f] += t[f]; });
   });
   return R;
 }
-/* 2026 efetivo por categoria: no modo "detalhado" vem todo do cálculo (seção 5); no modo "digitado", dos 3 campos. [MED P/ECO, FAT P/ECO, VALOR] + _det */
+/* 2026 por categoria [MED P/ECO, FAT P/ECO, VALOR], sempre calculado da base */
 function eff26(key) {
-  var R = CACHE26[key] || (CACHE26[key] = compute26(key)), typed = S.b26[key], o = { _det: {} };
-  if (!R.has) { CATS.concat(['TOT']).forEach(function (c) { o[c] = typed[c]; }); return o; }
+  var R = CACHE26[key] || (CACHE26[key] = compute26(key)), o = { _det: {} };
   CATS.concat(['TOT']).forEach(function (c) { var r = c === 'TOT' ? R.tot : R.cats[c]; o[c] = [r.E ? r.VM / r.E : 0, r.E ? r.FAT / r.E : 0, r.VAL]; o._det[c] = true; });
   return o;
 }
 function effTar26(key, gname, code) {
-  var R = CACHE26[key], typed = (S.tar26[key][gname] || {})[code] || {};
-  if (!R || !R.has) return typed;
-  var r = null;
+  var R = CACHE26[key] || (CACHE26[key] = compute26(key)), r = null;
   if (code === 'TOT') r = R.groups[gname];
   else S.seg[key].blocks.forEach(function (b) { if (b.sec === gname && b.cat === code && R.blocks[b.id]) r = R.blocks[b.id]; });
-  if (!r) return typed;
-  return { med: r.E ? r.VM / r.E : null, fat: r.E ? r.FAT / r.E : null, val: r.VAL, det: true };
+  if (!r) return {};
+  return { med: r.E ? r.VM / r.E : null, fat: r.E ? r.FAT / r.E : null, val: r.VAL, E: r.E, VM: r.VM, det: true };
 }
+/* escala os volumes medidos de 2026 (todas as faixas e meses, e o Q x P) dos blocos indicados pelo fator k — é o que uma edição
+   de MED P/ECO ou VOL MED em nível de categoria/tarifa/total faz; economias e tarifas não mudam */
+function y26Scale(key, ids, k) {
+  if (!isFinite(k) || k <= 0 || Math.abs(k - 1) < 1e-12) return;
+  ids.forEach(function (id) {
+    var b = S.seg[key].blocks[id], e = y26Get(key, b, true);
+    e.m.forEach(function (inp) { for (var i = 0; i < b.n; i++) inp.vol[i] = num(inp.vol[i]) * k; inp.qpVol = num(inp.qpVol) * k; });
+  });
+}
+function idsOfTar(key, gname, code) { var ids = []; S.seg[key].blocks.forEach(function (b) { if (b.sec === gname && (code === 'TOT' || b.cat === code)) ids.push(b.id); }); return ids; }
 
 /* ---------- grade 2026 por tarifa (faixa × mês) ---------- */
 var Y26ROWS = { agua: {}, esgoto: {} };
@@ -2163,7 +2165,15 @@ document.addEventListener('paste', function (e) {
 document.addEventListener('input', function (e) {
   var t = e.target;
   if (t.matches('input.y26in')) { pushHist(t); y26Set(t.dataset.k, +t.dataset.b, t.dataset.f, +t.dataset.i, +t.dataset.m, parseBR(t.value)); y26Ensure(t.dataset.k, 'detail'); y26AfterEdit(); }
-  else if (t.matches('.i26, .t26')) { if (y26Mode(t.dataset.k) !== 'typed') { y26Ensure(t.dataset.k, 'typed'); saveY26(); CACHE26 = {}; update(); } }   // o handler original já gravou o valor digitado
+  else if (t.matches('input.y26c, input.y26t')) {              // MED P/ECO ou VOL MED de 2026 em nível de categoria/total (seção 3) ou de tarifa (comparação por tarifa)
+    var key = t.dataset.k, v = parseBR(t.value); if (isNaN(v) || v <= 0) return;
+    var R = CACHE26[key] || compute26(key), ids, cur;
+    if (t.classList.contains('y26c')) { ids = idsOfCat(key, t.dataset.c); cur = t.dataset.c === 'TOT' ? R.tot : R.cats[t.dataset.c]; }
+    else { ids = idsOfTar(key, t.dataset.g, t.dataset.c); cur = effTar26(key, t.dataset.g, t.dataset.c); }
+    if (!cur || !cur.E || !cur.VM) return;
+    var base = t.dataset.f === 'vm' ? cur.VM : cur.VM / cur.E;
+    pushHist(t); y26Scale(key, ids, v / base); y26AfterEdit();
+  }
 });
 document.addEventListener('toggle', function (e) { var d = e.target; if (d.classList && d.classList.contains('y26d') && d.open) updateY26(d.dataset.k); }, true);
 
@@ -2323,21 +2333,18 @@ document.addEventListener('click', function (e) { var t = e.target.closest('butt
 function renderY26() {
   ['agua', 'esgoto'].forEach(function (key) {
     updateY26(key);
-    var e = eff26(key), R = CACHE26[key];
-    var det = R.mode === 'detail';
-    document.querySelectorAll('.i26[data-k="' + key + '"]').forEach(function (el) { el.disabled = false; el.classList.toggle('inactive', det); el.title = det ? 'Mostrando o valor calculado da base detalhada (seção 5). Digite aqui para os indicadores voltarem a usar os valores digitados.' : ''; });
-    document.querySelectorAll('.t26[data-k="' + key + '"]').forEach(function (el) { var t = effTar26(key, el.dataset.g, el.dataset.c); el.disabled = false; el.classList.toggle('inactive', !!t.det); if (t.det && document.activeElement !== el) el.value = t[el.dataset.f] != null ? Math.round(t[el.dataset.f] * 100) / 100 : ''; el.title = t.det ? 'Calculado da base 2026 detalhada desta tarifa. Digite para voltar ao digitado.' : ''; });
-    var s3 = $('y26s3-' + key); if (s3) { s3.textContent = det ? 'inativo: indicadores usam a base detalhada (seção 5) — digite aqui para voltar' : 'ativo nos indicadores'; s3.classList.toggle('warn', det); }
-    var hint = $('y26h-' + key); if (hint) hint.textContent = R.has ? 'valor 2026 R$ ' + f0(R.tot.VAL) + ' · ' + f0(R.tot.E) + ' economias · MED P/ECO ' + (R.tot.E ? f2(R.tot.VM / R.tot.E) : '–') + ' · ' + (R.edited ? R.edited + ' tarifa(s)/categoria(s) editada(s)/importada(s)' : 'padrão: volumes e economias da planilha à tarifa 2026') : 'modo "digitado": os indicadores usam os 3 campos por categoria da seção 3; mude para "detalhado" para esta base valer';
-    var rd = document.querySelector('input[name="y26mode-' + key + '"][value="' + R.mode + '"]'); if (rd) rd.checked = true;
+    var R = CACHE26[key];
+    // seção 3: MED P/ECO e VOL MED 2026 (editáveis) + FAT P/ECO e VALOR (calculados), por categoria e total
+    CATS.concat(['TOT']).forEach(function (c) {
+      var r = c === 'TOT' ? R.tot : R.cats[c], id = key + '-' + c + '-';
+      ['med', 'vm'].forEach(function (f) { var el = document.querySelector('.y26c[data-k="' + key + '"][data-c="' + c + '"][data-f="' + f + '"]'); if (!el) return; el.disabled = !r.E; if (document.activeElement !== el) el.value = r.E ? (f === 'med' ? (r.VM / r.E).toFixed(2) : String(Math.round(r.VM))) : ''; });
+      var fe = $(id + 'F26v'), ve = $(id + 'V26v'); if (fe) fe.textContent = r.E ? f2(r.FAT / r.E) : '–'; if (ve) ve.textContent = f0(r.VAL);
+    });
+    // comparação por tarifa: MED P/ECO 2026 editável; FAT P/ECO e VALOR calculados
+    document.querySelectorAll('.y26t[data-k="' + key + '"]').forEach(function (el) { var t = effTar26(key, el.dataset.g, el.dataset.c); el.disabled = !t.E; if (document.activeElement !== el) el.value = t.E ? (t.VM / t.E).toFixed(2) : ''; });
+    var hint = $('y26h-' + key); if (hint) hint.textContent = 'valor 2026 R$ ' + f0(R.tot.VAL) + ' · ' + f0(R.tot.E) + ' economias · MED P/ECO ' + (R.tot.E ? f2(R.tot.VM / R.tot.E) : '–') + ' · ' + (R.edited ? R.edited + ' tarifa(s)/categoria(s) editada(s)/importada(s)' : 'padrão: volumes e economias da planilha à tarifa 2026');
     var warn = $('y26w-' + key); if (warn) { var noTar = !S.seg[key].blocks.some(function (b) { return b.tarPrev; }); warn.hidden = !noTar; }
   });
-}
-document.addEventListener('change', function (e) { var t = e.target; if (t.name && /^y26mode-/.test(t.name)) { pushHist(); setY26Mode(t.name.slice(8), t.value); } });
-function y26ModeLabel() {                       // "detalhado", "digitado" ou "Água detalhado / Esgoto digitado" conforme o recorte
-  var ks = scopeKeys(), L = ks.map(function (k) { return (CACHE26[k] && CACHE26[k].mode === 'detail') ? 'detalhado' : 'digitado'; });
-  if (ks.length === 1 || L[0] === L[1]) return L[0];
-  return ks.map(function (k, i) { return SEG_LABEL[k] + ' ' + L[i]; }).join(' / ');
 }
 
 /* ---------- início ---------- */
