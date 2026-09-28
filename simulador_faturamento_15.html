@@ -288,7 +288,7 @@ details.y26d>summary{border-left-color:var(--c26);}
     <button type="button" data-scope="both" class="on" aria-pressed="true">ÁGUA + ESGOTO</button>
   </div>
   <section class="kpis" aria-label="Indicadores">
-    <div class="kpi"><div class="l">Receita 2026 (base informada)</div><div class="v" id="k26">–</div><div class="s" id="k26-s">Água + Esgoto</div><div class="bd" id="k26-bd"></div></div>
+    <div class="kpi"><div class="l" id="k26-l">Receita 2026</div><div class="v" id="k26">–</div><div class="s" id="k26-s">Água + Esgoto</div><div class="bd" id="k26-bd"></div></div>
     <div class="kpi"><div class="l">Receita 2027 · tarifas (base)</div><div class="v" id="kbase">–</div><div class="s" id="kbase-s"></div><div class="bd" id="kbase-bd"></div></div>
     <div class="kpi sim"><div class="l">Receita 2027 · simulada</div><div class="v" id="ksim">–</div><div class="s" id="ksim-s"></div><div class="bd" id="ksim-bd"></div></div>
     <div class="kpi sim"><div class="l">Efeito do ajuste</div><div class="v" id="kdelta">–</div><div class="s" id="kdelta-s"></div><div class="bd" id="kdelta-bd"></div></div>
@@ -948,10 +948,12 @@ function buildPanel(key) {
   });
   h += '</tbody></table></div></div>';
   h += '<div class="card y26"><div class="card-h"><h2>5 · BASE 2026 POR TARIFA, FAIXA E MÊS · ' + SEG_LABEL[key] + '</h2><span class="hint" id="y26h-' + key + '"></span></div>' +
-    '<div class="y26note">Preencha <b>economias</b>, <b>volume medido</b> e <b>tarifa</b> de 2026 (sem o reajuste de 2027) por faixa e mês. VOL FAT, VALOR FATURADO e FAT P/ECO são calculados com a mesma regra escalonada de 2027 e passam a valer em todas as comparações “vs 2026” (KPIs, comparativos, cenários, gráficos e Excel), no lugar dos 3 campos digitados por categoria. ' +
-    'Você pode <b>colar do Excel</b> (clique na célula inicial e Ctrl+V — o bloco preenche os meses à direita e as linhas abaixo), <b>importar</b> uma planilha LeverPro que tenha colunas de 2026 (Jan-2026 … Dez-2026) ou o <b>modelo</b> gerado aqui já preenchido.</div>' +
+    '<div class="y26note"><b>Economias</b>, <b>volume medido</b> e <b>tarifa</b> de 2026 (sem o reajuste de 2027) por faixa e mês. A base já vem preenchida com os volumes e economias da planilha à tarifa de 2026; qualquer ajuste aqui recalcula VOL FAT, VALOR FATURADO e FAT P/ECO com a mesma regra escalonada de 2027 e <b>reflete na hora</b> em tudo que compara com 2026 (KPIs, comparativo consolidado, cenários, gráficos e Excel). ' +
+    'Para colocar o realizado: <b>cole do Excel</b> (clique na célula inicial e Ctrl+V — o bloco preenche os meses à direita e as linhas abaixo), <b>importe</b> uma planilha LeverPro com colunas de 2026 (Jan-2026 … Dez-2026) ou o <b>modelo</b> gerado aqui já preenchido.</div>' +
+    '<div class="y26bar"><span class="lbl" style="font-weight:700;font-size:13px">2026 usado nos indicadores:</span><label class="chk" style="display:inline-flex;align-items:center;gap:5px"><input type="radio" name="y26mode-' + key + '" value="detail"> detalhado (esta seção)</label><label class="chk" style="display:inline-flex;align-items:center;gap:5px"><input type="radio" name="y26mode-' + key + '" value="typed"> digitado por categoria (seção 3)</label>' +
+    '<span class="pill warn" id="y26w-' + key + '" hidden title="A planilha embutida deste segmento não tem colunas de 2026; a tarifa começou igual à de 2027. Importe o LeverPro deste segmento (que tenha meses de 2026) ou edite as linhas de tarifa.">tarifa 2026 não encontrada — usando a de 2027</span></div>' +
     '<div class="y26bar"><label class="filebtn">Importar planilha 2026<input type="file" accept=".xlsx,.xlsm" data-k26="' + key + '"></label><button type="button" class="btn ghost" data-y26tpl="' + key + '">Baixar modelo (Excel)</button>' +
-    '<button type="button" class="btn ghost" data-y26fold="' + key + '" data-open="1">Expandir</button><button type="button" class="btn ghost" data-y26fold="' + key + '" data-open="0">Recolher</button><button type="button" class="btn danger" data-y26clear="' + key + '">Apagar 2026 detalhado</button><span class="status" id="st26-' + key + '"></span></div>' +
+    '<button type="button" class="btn ghost" data-y26fold="' + key + '" data-open="1">Expandir</button><button type="button" class="btn ghost" data-y26fold="' + key + '" data-open="0">Recolher</button><button type="button" class="btn danger" data-y26clear="' + key + '">Voltar ao padrão</button><span class="status" id="st26-' + key + '"></span></div>' +
     '<div id="y26-' + key + '">' + buildY26(key) + '</div></div>';
   h += '<div class="chart2"><div class="card"><div class="card-h"><h2>VALOR DE FATURAMENTO · ' + SEG_LABEL[key] + '</h2><span class="hint" id="' + key + '-src"></span></div><div class="chart" id="' + key + '-chart"></div></div>' +
        '<div class="card"><div class="card-h"><h2>MÊS A MÊS · ' + SEG_LABEL[key] + '</h2><span class="hint">2027 base × simulado · Δ do mês em milhares de R$</span></div><div class="chart" id="' + key + '-mchart"></div></div></div>';
@@ -1132,6 +1134,7 @@ function update() {
   $('kdelta').innerHTML = '<span class="' + cls(d) + '">' + (Math.abs(d) < 0.5 ? 'R$ 0' : sgn(d, mi)) + '</span>';
   $('kdelta-s').innerHTML = tbase ? dpc(d / tbase) + ' sobre a base' : '';
   $('k26-s').textContent = scope === 'both' ? 'Água + Esgoto' : SEG_LABEL[scope];
+  $('k26-l').textContent = 'Receita 2026 (' + y26ModeLabel() + ')';
   function seg(v) { return '<span class="seg"><span class="dot ' + v.k + '"></span>' + SEG_LABEL[v.k] + ' <b>' + mi(v.x) + '</b></span>'; }
   function bd(field) { return ['agua', 'esgoto'].map(function (k) { return seg({ k: k, x: byKey[k][field] }); }).join(''); }
   var showBd = scope === 'both';
@@ -1577,7 +1580,7 @@ function renderBoth() {
       '<td class="' + cls(vb - v26) + '">' + (v26 ? sgn(vb - v26, f0) : '–') + '</td><td>' + dpc(v26 ? (vb - v26) / v26 : NaN) + '</td></tr>';
   });
   $('both-table').innerHTML = h + '</tbody></table>';
-  $('both-hint').textContent = scopeLabel() + ' · 2026 (digitado) × 2027 base × 2027 simulado, por categoria';
+  $('both-hint').textContent = scopeLabel() + ' · 2026 (' + y26ModeLabel() + ') × 2027 base × 2027 simulado, por categoria';
 }
 
 /* ---------- barra fixa (resumo que acompanha a rolagem) ---------- */
@@ -1863,7 +1866,8 @@ function renderSteps() {
   var n = activeCount('agua') + activeCount('esgoto');
   function st(i, done, txt) { var b = document.querySelector('.steps [data-step="' + i + '"]'); b.classList.toggle('done', !!done); $('stp-' + i).textContent = txt; }
   st(1, true, imp.length ? 'importado: ' + imp.map(function (k) { return SEG_LABEL[k]; }).join(' e ') : 'usando dados embutidos');
-  st(2, has26, nDet ? '2026 detalhado: ' + nDet + ' tarifa(s)/categoria(s)' + (has26 ? '' : ' · falta um segmento') : (has26 ? '2026 digitado por categoria' : 'digite ou importe os valores de 2026'));
+  var modes = ['agua', 'esgoto'].map(function (k) { return CACHE26[k] && CACHE26[k].mode === 'detail' ? SEG_LABEL[k] + ' detalhado' + (CACHE26[k].edited ? ' (' + CACHE26[k].edited + ' editada(s))' : ' (padrão)') : SEG_LABEL[k] + ' digitado'; });
+  st(2, has26, modes.join(' · '));
   st(3, n > 0, n ? n + (n === 1 ? ' tarifa/categoria ajustada' : ' tarifas/categorias ajustadas') : 'sem ajustes ainda');
   st(4, S.scen.length > 0, S.scen.length ? S.scen.length + (S.scen.length === 1 ? ' cenário salvo' : ' cenários salvos') : 'salve um cenário para comparar');
   st(5, S.flags.exported, S.flags.exported ? 'exportado nesta sessão' : 'Excel ou simulador (HTML)');
@@ -2001,18 +2005,23 @@ S.y26 = JSON.parse(JSON.stringify(DEFAULT_Y26));
 try { var savedY = JSON.parse(localStorage.getItem(LS_Y26) || 'null'); if (savedY && savedY.agua && savedY.esgoto) S.y26 = savedY; } catch (e) { }
 function saveY26() { try { localStorage.setItem(LS_Y26, JSON.stringify(S.y26)); } catch (e) { } }
 function y26Key(b) { return b.sec + '|' + b.cat; }
-function y26Default(b) {                        // vazio: economias/volumes 0; tarifa 2026 da planilha (colunas 2026) ou, na falta, a de 2027
-  var m = []; for (var j = 0; j < 12; j++) { var M = b.months[j]; m.push({ eco: zeros(b.n), vol: zeros(b.n), tar: b.tarPrev ? b.tarPrev.slice() : M.tar.concat(b.hasQP ? [M.qpTar] : []), qpVol: 0 }); }
-  return { m: m, src: b.tarPrev ? 'tarifa 2026 da planilha' : 'tarifa de 2027 (sem tarifa 2026 na planilha)' };
+/* Padrão de um bloco em 2026: as MESMAS economias e volumes da planilha (2027) à TARIFA DE 2026 (colunas 2026 da planilha; na falta, a de 2027).
+   Assim a base já nasce preenchida e qualquer ajuste (célula, colagem, importação) é incremental e reflete nos indicadores na hora. */
+function y26Default(b) {
+  var m = []; for (var j = 0; j < 12; j++) { var M = b.months[j]; m.push({ eco: M.eco.slice(), vol: M.vol.slice(), tar: b.tarPrev ? b.tarPrev.slice() : M.tar.concat(b.hasQP ? [M.qpTar] : []), qpVol: M.qpVol }); }
+  return { m: m, src: b.tarPrev ? 'volumes/economias da planilha à tarifa 2026' : 'volumes/economias da planilha · tarifa 2026 não encontrada: usando a de 2027' };
 }
 function y26Get(key, b, create) { var k = y26Key(b), e = S.y26[key][k]; if (!e && create) e = S.y26[key][k] = y26Default(b); return e; }
-function y26HasData(e) { return !!e && e.m.some(function (x) { return num(x.qpVol) !== 0 || x.eco.some(function (v) { return num(v) !== 0; }) || x.vol.some(function (v) { return num(v) !== 0; }); }); }
+function y26HasData(e) { return !!e; }        // entrada guardada = bloco editado/importado
+function y26Mode(key) { var m = S.y26._mode && S.y26._mode[key]; if (m) return m; return S.seg[key].blocks.some(function (b) { return b.tarPrev; }) ? 'detail' : 'typed'; }
+function setY26Mode(key, mode) { S.y26._mode = S.y26._mode || {}; S.y26._mode[key] = mode; y26AfterEdit(); }
 function z4() { return { E: 0, VM: 0, FAT: 0, VAL: 0 }; }
 function compute26(key) {
-  var seg = S.seg[key], R = { blocks: {}, cats: {}, tot: z4(), groups: {}, has: false, n: 0 };
+  var seg = S.seg[key], R = { blocks: {}, cats: {}, tot: z4(), groups: {}, has: false, n: 0, edited: 0, mode: y26Mode(key) };
   CATS.forEach(function (c) { R.cats[c] = z4(); });
+  if (R.mode !== 'detail') return R;
   seg.blocks.forEach(function (b) {
-    var e = S.y26[key][y26Key(b)]; if (!y26HasData(e)) return;
+    var e = S.y26[key][y26Key(b)]; if (e) R.edited++; else e = y26Default(b);
     var months = e.m.map(function (inp) { return recalcMonth(b, inp); }), t = z4();
     months.forEach(function (M) { t.E += M.E; t.VM += M.VM; t.FAT += M.FAT; t.VAL += M.VAL; });
     t.months = months; R.blocks[b.id] = t; R.has = true; R.n++;
@@ -2021,18 +2030,11 @@ function compute26(key) {
   });
   return R;
 }
-/* 2026 efetivo por categoria: detalhado quando há dados na categoria; senão o digitado. [MED P/ECO, FAT P/ECO, VALOR] + _det */
+/* 2026 efetivo por categoria: no modo "detalhado" vem todo do cálculo (seção 5); no modo "digitado", dos 3 campos. [MED P/ECO, FAT P/ECO, VALOR] + _det */
 function eff26(key) {
   var R = CACHE26[key] || (CACHE26[key] = compute26(key)), typed = S.b26[key], o = { _det: {} };
   if (!R.has) { CATS.concat(['TOT']).forEach(function (c) { o[c] = typed[c]; }); return o; }
-  var allDet = true, E = 0, VM = 0, FAT = 0, VAL = 0;
-  CATS.forEach(function (c) {
-    var r = R.cats[c];
-    if (r.E || r.VAL) { o[c] = [r.E ? r.VM / r.E : 0, r.E ? r.FAT / r.E : 0, r.VAL]; o._det[c] = true; E += r.E; VM += r.VM; FAT += r.FAT; VAL += r.VAL; }
-    else { o[c] = typed[c]; allDet = false; VAL += +typed[c][2]; }
-  });
-  if (allDet) { o.TOT = [E ? VM / E : 0, E ? FAT / E : 0, VAL]; o._det.TOT = true; }
-  else o.TOT = [+typed.TOT[0], +typed.TOT[1], VAL];
+  CATS.concat(['TOT']).forEach(function (c) { var r = c === 'TOT' ? R.tot : R.cats[c]; o[c] = [r.E ? r.VM / r.E : 0, r.E ? r.FAT / r.E : 0, r.VAL]; o._det[c] = true; });
   return o;
 }
 function effTar26(key, gname, code) {
@@ -2041,7 +2043,7 @@ function effTar26(key, gname, code) {
   var r = null;
   if (code === 'TOT') r = R.groups[gname];
   else S.seg[key].blocks.forEach(function (b) { if (b.sec === gname && b.cat === code && R.blocks[b.id]) r = R.blocks[b.id]; });
-  if (!r || !(r.E || r.VAL)) return typed;
+  if (!r) return typed;
   return { med: r.E ? r.VM / r.E : null, fat: r.E ? r.FAT / r.E : null, val: r.VAL, det: true };
 }
 
@@ -2088,25 +2090,26 @@ function updateY26(key) {
   var seg = S.seg[key], R = CACHE26[key];
   seg.groups.forEach(function (g, gi) {
     var gp = 'y' + key + gi, d = $(gp); if (!d) return;
-    var V = 0, E = 0, n = 0; g.ids.forEach(function (id) { var r = R.blocks[id]; if (r) { V += r.VAL; E += r.E; n++; } });
+    var V = 0, E = 0, n = 0; g.ids.forEach(function (id) { var b = S.seg[key].blocks[id], r = R.blocks[id] || y26Totals(b); V += r.VAL; E += r.E; if (S.y26[key][y26Key(b)]) n++; });
     $(gp + '-V').textContent = 'R$ ' + f0(V); $(gp + '-E').textContent = E ? f0(E) + ' eco' : '';
-    $(gp + '-N').textContent = n ? n + ' de ' + g.ids.length + ' com dados' : ''; $(gp + '-N').style.display = n ? '' : 'none';
+    $(gp + '-N').textContent = n ? n + ' de ' + g.ids.length + ' editada(s)' : ''; $(gp + '-N').style.display = n ? '' : 'none';
     if (!d.open) return;
     g.ids.forEach(function (id) { updateY26Block(key, id); });
   });
 }
+function y26Totals(b) { var e = y26Default(b), t = z4(); t.months = e.m.map(function (inp) { return recalcMonth(b, inp); }); t.months.forEach(function (M) { t.E += M.E; t.VM += M.VM; t.FAT += M.FAT; t.VAL += M.VAL; }); return t; }
 function updateY26Block(key, id) {
-  var b = S.seg[key].blocks[id], e = y26Get(key, b, false) || y26Default(b), R = CACHE26[key], calc = R.blocks[id];
+  var b = S.seg[key].blocks[id], stored = y26Get(key, b, false), def = y26Default(b), e = stored || def, R = CACHE26[key], calc = R.blocks[id];
   var months = calc ? calc.months : e.m.map(function (inp) { return recalcMonth(b, inp); }), rows = Y26ROWS[key][id];
-  $('Y' + key + id + '-src').textContent = (calc ? 'com dados' : 'sem dados ainda') + ' · ' + e.src;
+  $('Y' + key + id + '-src').textContent = (stored ? 'editado/importado' : 'padrão') + ' · ' + e.src + (R.mode !== 'detail' ? ' · (modo "digitado": não entra nos indicadores)' : '');
   rows.forEach(function (r) {
     var sum = 0, cnt = 0;
     for (var m = 0; m < 12; m++) {
-      var M = months[m], inp = e.m[m], v, el = $('Y' + key + id + '-' + r.f + r.i + '-' + m);
-      if (r.f === 'eco') v = inp.eco[r.i]; else if (r.f === 'vol') v = inp.vol[r.i]; else if (r.f === 'tar') v = inp.tar[r.i]; else if (r.f === 'qpVol') v = inp.qpVol;
+      var M = months[m], inp = e.m[m], dm = def.m[m], v, dv, el = $('Y' + key + id + '-' + r.f + r.i + '-' + m);
+      if (r.f === 'eco') { v = inp.eco[r.i]; dv = dm.eco[r.i]; } else if (r.f === 'vol') { v = inp.vol[r.i]; dv = dm.vol[r.i]; } else if (r.f === 'tar') { v = inp.tar[r.i]; dv = dm.tar[r.i]; } else if (r.f === 'qpVol') { v = inp.qpVol; dv = dm.qpVol; }
       else if (r.f === 'val') v = M.valT[r.i]; else if (r.f === 'qpVal') v = M.qpVal; else if (r.f === 'MED') v = M.E ? M.VM / M.E : 0; else if (r.f === 'FPE') v = M.E ? M.FAT / M.E : 0; else v = M[r.f];
       v = num(v); sum += v; if (v) cnt++;
-      if (el.tagName === 'INPUT') { if (document.activeElement !== el) el.value = fmtIn(r.f, v); el.classList.toggle('changed', !!v && r.f !== 'tar'); }
+      if (el.tagName === 'INPUT') { if (document.activeElement !== el) el.value = fmtIn(r.f, v); el.classList.toggle('changed', !!stored && Math.abs(v - num(dv)) > 1e-9); }
       else el.textContent = v ? (r.f === 'MED' || r.f === 'FPE' ? f2(v) : f0(v)) : '–';
     }
     var A = $('Y' + key + id + '-' + r.f + r.i + '-A'), av;
@@ -2231,7 +2234,7 @@ document.addEventListener('change', function (e) { var t = e.target; if (t.match
 document.addEventListener('click', function (e) {
   var t = e.target.closest('button'); if (!t) return;
   if (t.dataset.y26tpl) exportTemplate26(t.dataset.y26tpl);
-  else if (t.dataset.y26clear) { if (confirm('Apagar todos os dados de 2026 detalhado de ' + SEG_LABEL[t.dataset.y26clear] + '? (o 2026 digitado por categoria volta a valer)')) { pushHist(); S.y26[t.dataset.y26clear] = {}; y26AfterEdit(); setStatus26(t.dataset.y26clear, '2026 detalhado apagado.', ''); } }
+  else if (t.dataset.y26clear) { if (confirm('Descartar todas as edições/importações de 2026 de ' + SEG_LABEL[t.dataset.y26clear] + ' e voltar ao padrão (volumes e economias da planilha à tarifa 2026)?')) { pushHist(); S.y26[t.dataset.y26clear] = {}; y26AfterEdit(); setStatus26(t.dataset.y26clear, '2026 voltou ao padrão.', ''); } }
   else if (t.dataset.y26fold) { document.querySelectorAll('#y26-' + t.dataset.y26fold + ' details.y26d').forEach(function (d) { d.open = t.dataset.open === '1'; }); }
 });
 /* ---------- 2027: colar do Excel e importar planilha nas grades faixa × mês (MED P/ECO / VOL MED) ---------- */
@@ -2315,8 +2318,16 @@ function renderY26() {
     var e = eff26(key), R = CACHE26[key];
     document.querySelectorAll('.i26[data-k="' + key + '"]').forEach(function (el) { var det = !!e._det[el.dataset.c]; el.disabled = det; el.title = det ? 'Calculado da base 2026 detalhada (seção 5). Para digitar, apague o 2026 detalhado.' : ''; });
     document.querySelectorAll('.t26[data-k="' + key + '"]').forEach(function (el) { var t = effTar26(key, el.dataset.g, el.dataset.c); el.disabled = !!t.det; if (t.det && document.activeElement !== el) el.value = t[el.dataset.f] != null ? Math.round(t[el.dataset.f] * 100) / 100 : ''; el.title = t.det ? 'Calculado da base 2026 detalhada desta tarifa.' : ''; });
-    var hint = $('y26h-' + key); if (hint) hint.textContent = R.has ? R.n + ' tarifa(s)/categoria(s) com dados · valor 2026 R$ ' + f0(R.tot.VAL) + ' · ' + f0(R.tot.E) + ' economias · MED P/ECO ' + (R.tot.E ? f2(R.tot.VM / R.tot.E) : '–') : 'sem dados detalhados — valem os 3 campos digitados por categoria (seção 3)';
+    var hint = $('y26h-' + key); if (hint) hint.textContent = R.has ? 'valor 2026 R$ ' + f0(R.tot.VAL) + ' · ' + f0(R.tot.E) + ' economias · MED P/ECO ' + (R.tot.E ? f2(R.tot.VM / R.tot.E) : '–') + ' · ' + (R.edited ? R.edited + ' tarifa(s)/categoria(s) editada(s)/importada(s)' : 'padrão: volumes e economias da planilha à tarifa 2026') : 'modo "digitado": os indicadores usam os 3 campos por categoria da seção 3; mude para "detalhado" para esta base valer';
+    var rd = document.querySelector('input[name="y26mode-' + key + '"][value="' + R.mode + '"]'); if (rd) rd.checked = true;
+    var warn = $('y26w-' + key); if (warn) { var noTar = !S.seg[key].blocks.some(function (b) { return b.tarPrev; }); warn.hidden = !noTar; }
   });
+}
+document.addEventListener('change', function (e) { var t = e.target; if (t.name && /^y26mode-/.test(t.name)) { pushHist(); setY26Mode(t.name.slice(8), t.value); } });
+function y26ModeLabel() {                       // "detalhado", "digitado" ou "Água detalhado / Esgoto digitado" conforme o recorte
+  var ks = scopeKeys(), L = ks.map(function (k) { return (CACHE26[k] && CACHE26[k].mode === 'detail') ? 'detalhado' : 'digitado'; });
+  if (ks.length === 1 || L[0] === L[1]) return L[0];
+  return ks.map(function (k, i) { return SEG_LABEL[k] + ' ' + L[i]; }).join(' / ');
 }
 
 /* ---------- início ---------- */
