@@ -48,3 +48,20 @@ Testado em Chromium headless (Playwright): carregamento sem erros, edição por 
 | **Glossário** | Seção no fim com todos os termos (ECO FAT, MED P/ECO, VOL FAT, FAT P/ECO, faixa, Q x P, base, simulado, fator, cenário…). |
 
 Validado em Chromium headless: regressão da v13 completa + dicas (cabeçalho, campo, KPI), simulação rápida (prévia e aplicação), tour completo, navegação por etapas, marcação da etapa 5 ao exportar, desligar dicas, importação atualizando a lista de tarifas.
+
+## v15 — base 2026 detalhada (economias, volume e tarifa por faixa × mês)
+
+O 2026 deixa de ser três números digitados por categoria e passa a ser uma base completa, calculada com a **mesma regra escalonada** de 2027.
+
+| Peça | O que faz |
+|---|---|
+| `recalcMonth(bloco, entradas)` | Refaz um mês a partir de economias, volume medido, tarifa final por faixa e volume Q x P — cópia fiel da conta de `parseTabSheet` (mínimo da faixa 1, excedentes com `round2`, Q x P). Teste: reproduz os 708 meses embutidos com diferença ≤ 1e-9. |
+| `parseTabSheet(name, aoa, year)` | Com `year`, lê as colunas daquele ano (ex.: `Jan-2026 … Dez-2026`) mês a mês; meses ausentes ficam zerados. Sem `year`, além dos 12 meses de 2027 captura `tarPrev` = tarifa final do último mês do ano anterior (Dez/2026 — a **tarifa sem o reajuste de 2027**). Os dados embutidos de ÁGUA foram regenerados com `tarPrev`. |
+| `S.y26[seg]["tarifa\|categoria"]` | Economias, volume medido e tarifa por faixa × mês. Guardado no navegador e embutido no "Salvar simulador" (`DEFAULT_Y26`). Entra no Desfazer. |
+| `eff26()` / `effTar26()` | 2026 efetivo: quando a categoria/tarifa tem dados detalhados, MED P/ECO, FAT P/ECO e VALOR vêm do cálculo e os campos digitados ficam bloqueados; senão vale o digitado. Usado em KPIs, comparativo consolidado, comparação por tarifa, cenários, gráfico, etapas e Excel. |
+| Seção **5 · Base 2026 por tarifa, faixa e mês** | Uma grade por tarifa/categoria: por faixa, linhas *economias*, *volume medido*, *tarifa* (editáveis, azul) e *valor faturado* (calculado); totais ECO FAT, VOL MED, VOL FAT, VALOR, MED P/ECO, FAT P/ECO; coluna ANO. A tarifa inicial é a de Dez/2026 da planilha (ou a de 2027 quando o arquivo não tem colunas de 2026 — caso do Esgoto embutido; importar o LeverPro de esgoto novamente corrige). |
+| **Colar do Excel** | Ctrl+V numa célula preenche o bloco copiado para a direita (meses) e para baixo (linhas editáveis); aceita `1.234,56`, `1234.56`, `R$`. |
+| **Grades 2027 (simulação)** | Nas grades faixa × mês de cada tarifa (MED P/ECO ou VOL MED), **Ctrl+V** cola um bloco copiado do Excel (a partir da célula focada, meses à direita e faixas abaixo) e cada célula passa pelo `applyEdit` normal. **Baixar modelo (Excel)** gera TARIFA, CATEGORIA, FAIXA, MÉTRICA, Jan…Dez com os valores simulados atuais (sem arredondar — reimportar sem mexer não cria ajuste); **Importar ajustes (Excel)** aplica o modelo preenchido. |
+| **Importar planilha 2026** | Reconhece (a) o **modelo** gerado por "Baixar modelo (Excel)" — colunas TARIFA, CATEGORIA, FAIXA, MÉTRICA, Jan…Dez — e (b) uma planilha **LeverPro** com colunas de 2026 (os 5 meses Ago–Dez/2026 do arquivo atual entram; os demais ficam para completar; a tarifa dos meses ausentes mantém o padrão). |
+
+Validado em Chromium headless: conta da faixa 1 com mínimo (100 eco × 8 m³ + 50 eco × 15 m³ → VOL FAT 1.750, VALOR = 1.500 × 6,11 + 250 × 14,05), campos digitados bloqueados quando há detalhado, KPI 2026 recalculado, Desfazer devolvendo o 2026, colagem 2 × 3 células, modelo exportado e reimportado (432 linhas / 32 blocos), LeverPro com 5 meses de 2026, cenários/Excel/Salvar simulador com o 2026 embutido e reabertura; regressões v13 e v14 sem erros.
