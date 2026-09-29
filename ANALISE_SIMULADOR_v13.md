@@ -49,6 +49,12 @@ Testado em Chromium headless (Playwright): carregamento sem erros, edição por 
 
 Validado em Chromium headless: regressão da v13 completa + dicas (cabeçalho, campo, KPI), simulação rápida (prévia e aplicação), tour completo, navegação por etapas, marcação da etapa 5 ao exportar, desligar dicas, importação atualizando a lista de tarifas.
 
+## v19 — tarifas: 2026 = TARIFA (R$), 2027 = TARIFA FINAL (R$)
+
+Conferido na planilha: `TARIFA FINAL (R$) = ROUND(TARIFA × (1 + reajuste) × (1 − desconto), 6)`; o simulador já calculava exatamente isso para 2027 (`tf`). Para 2026 o parser agora lê a linha **TARIFA (R$)** (com o desconto do cliente, sem reajuste) do último mês de 2026 da planilha (`tarPrev`, com `tarPrevSrc` = "TARIFA (R$) de Dez-2026"); sem colunas de 2026, usa a TARIFA (R$) do 1º mês de 2027 (que, pela convenção da planilha, é a tarifa antes do reajuste) e avisa. A leitura de um LeverPro pelas colunas de 2026 também usa TARIFA (R$) sem reajuste. Verificado: AGUA_ESGOTO NORMAL RES → 2026 [6,11 · 14,05 · 26,27 · 45,82 · 48,88], 2027 [6,67 · 15,33 · 28,67 · 50,00 · 53,34].
+
+Observação: a planilha guarda a TARIFA FINAL com 6 casas (ex.: 6,667952); o motor herdado da v12 arredonda a tarifa a 2 casas (6,67) — diferença de até ~0,05 % no valor. Mantido como estava (sem trocar a lógica); trocar para 6 casas é uma linha (`round2` → `round6` na tarifa) se quiserem bater centavo a centavo com o Excel.
+
 ## v18 — FAT P/ECO e VALOR de 2026 editáveis (seção 3)
 
 São resultados da regra escalonada, então `y26Solve` acha por bissecção o fator de volume que produz o valor digitado (economias e tarifas ficam) e aplica `y26Scale`; MED P/ECO, VOL MED e o outro campo recalculam. Abaixo do mínimo faturável (faixa 1 × economias) avisa e aplica o mínimo. Teste: VALOR RES 124,9 → 130,0 mi resolvido exato (MED 8,14 → 8,54), FAT P/ECO 12,00 exato, TOTAL 180 mi, caso inatingível avisado, Desfazer restaura.
