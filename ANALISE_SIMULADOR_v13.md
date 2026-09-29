@@ -49,6 +49,19 @@ Testado em Chromium headless (Playwright): carregamento sem erros, edição por 
 
 Validado em Chromium headless: regressão da v13 completa + dicas (cabeçalho, campo, KPI), simulação rápida (prévia e aplicação), tour completo, navegação por etapas, marcação da etapa 5 ao exportar, desligar dicas, importação atualizando a lista de tarifas.
 
+## v16 — economias faturadas editáveis (2026 e 2027)
+
+Regra: ao mudar as economias, o **consumo médio por economia fica constante** — o volume acompanha e VOL FAT/VALOR recalculam pela regra escalonada (inclusive o mínimo da faixa 1).
+
+| Peça | O que faz |
+|---|---|
+| **2027: fator `ke`** (bloco × mês × faixa, como `kf`) | `ecoAdjMonth` refaz o mês com economias × k e volume × k (`recalcMonth`); depois `monthDetail` aplica o fator de consumo. A base continua a planilha; o simulado inclui os dois efeitos. `applyEdit` usa o mês já ajustado por economias como base (`mEff`), então volume e economias não se multiplicam duas vezes. |
+| **Onde editar em 2027** | Grades faixa × mês no modo **ECO FAT (editar)** (e consolidado mês a mês); coluna **ECO FAT simulado** nas linhas anuais de cada tarifa (seção 1) e por categoria/total (seção 3); **Simulação rápida** com "O que varia: economias"; colar do Excel e modelo Excel (linhas `ECO FAT`, importadas antes de MED/VOL). |
+| **2026** | `y26ScaleEco`: economias e volumes escalados na base; campos ECO FAT 2026 na seção 3 (categoria/total) e na comparação por tarifa; célula a célula na seção 5. |
+| **Onde aparece** | ECO FAT simulado com Δ nas tabelas, MED P/ECO = volume ÷ economias simuladas, "Ajustes ativos" (linhas marcadas *economias*), cenários (guardam `ke`), Desfazer, Excel (coluna ECO FAT simulado; AJUSTES com TIPO). |
+
+Validado em Chromium headless: +10% de economias numa categoria → ECO 470.844 → 517.928, VOL MED +10%, MED P/ECO inalterado (8,52), VALOR +R$ 6,38 mi; célula de faixa × mês dobrada; consolidado por mês; seção 3 (2027 e 2026); simulação rápida por economias (+5% COM = +R$ 2,45 mi, prévia = aplicado); cenário salvo/recarregado com economias; modelo 2027 ida-e-volta; regressões v13–v15 sem erros.
+
 ## v15 — base 2026 detalhada (economias, volume e tarifa por faixa × mês)
 
 O 2026 deixa de ser três números digitados por categoria e passa a ser uma base completa, calculada com a **mesma regra escalonada** de 2027.
