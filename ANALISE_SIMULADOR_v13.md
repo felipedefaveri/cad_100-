@@ -49,6 +49,12 @@ Testado em Chromium headless (Playwright): carregamento sem erros, edição por 
 
 Validado em Chromium headless: regressão da v13 completa + dicas (cabeçalho, campo, KPI), simulação rápida (prévia e aplicação), tour completo, navegação por etapas, marcação da etapa 5 ao exportar, desligar dicas, importação atualizando a lista de tarifas.
 
+## v23 — calibrar o volume de 2026 (MED P/ECO e FAT P/ECO alvo)
+
+Card **Calibrar volume de 2026**: alvo de MED P/ECO e FAT P/ECO por segmento × categoria. Dois graus de liberdade sobre os volumes da base 2026 (economias e tarifas ficam): **kB** escala as faixas 2+ e o Q x P (afeta medido e faturado) e é achado por bissecção pelo FAT P/ECO; **kA** escala a faixa 1 (só afeta o medido, pois a faixa 1 fatura o mínimo por economia), com teto por mês/tarifa de `limite da faixa × economias` (média da faixa 1 ≤ 10 m³), e sai da meta de MED P/ECO. Limites físicos avisados sem alterar nada: FAT abaixo do mínimo faturável; MED acima/abaixo do que o FAT permite (**o faturado nunca fica abaixo do medido**). Opção "priorizar FAT" aplica o FAT exato e o MED mais próximo possível. A calibração limpa os campos manuais de 2026 daquela categoria, entra no Desfazer e os alvos são persistidos e embutidos no "Salvar simulador" (`DEFAULT_CAL26`).
+
+Resultado com os alvos informados: ÁGUA COM 9,03/13,10 · IND 100,88/107,16 · PUB 62,69/64,41 e ESGOTO COM 9,62/13,48 · PUB 65,91/66,10 exatos; ESGOTO IND FAT 173,45 exato, MED limitado a 173,45 (alvo 189,62 é impossível com FAT 173,45).
+
 ## v22 — bate com a planilha ao centavo (arredondamento de 6 casas)
 
 Conferência com o levantamento feito no Excel (Jan–Dez/2027, ÁGUA): a planilha usa `ROUND(…, 6)` na TARIFA FINAL, no consumo médio e no excedente; o motor herdado da v12 usava 2 casas. Resultado: simulador R$ 187.647.809 × planilha R$ 187.627.483,75 (+R$ 20.325, 0,011 %). Com `round2` passando a 6 casas: **R$ 187.627.483,73** — diferença de R$ 0,02 no total e todas as 17 abas iguais ao centavo (ex.: ESGOTO TRATADO 84.224.649,80; ESGOTO COLETADO 60.628.171,61; AGUA_ESGOTO NORMAL 33.049.212,92). Os dados de ÁGUA foram reembutidos a partir da planilha enviada em 29/09; os meses do ESGOTO embutido foram reprocessados com a nova regra a partir das entradas guardadas (a tarifa guardada tinha 2 casas, então o esgoto só bate ao centavo depois de reimportar o LeverPro de esgoto).
