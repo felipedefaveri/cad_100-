@@ -49,6 +49,10 @@ Testado em Chromium headless (Playwright): carregamento sem erros, edição por 
 
 Validado em Chromium headless: regressão da v13 completa + dicas (cabeçalho, campo, KPI), simulação rápida (prévia e aplicação), tour completo, navegação por etapas, marcação da etapa 5 ao exportar, desligar dicas, importação atualizando a lista de tarifas.
 
+## v20 — campos de 2026 manuais e independentes
+
+Os cinco campos de 2026 da seção 3 (ECO FAT, MED P/ECO, VOL MED, FAT P/ECO, VALOR — por categoria e TOTAL) e os da comparação por tarifa (ECO, MED, FAT, VALOR) são **manuais**: `S.m26[seg][cat][campo]` / `S.tar26[seg][tarifa][cat][campo]`. O que é digitado vale como está e **não recalcula os vizinhos**; campo vazio = calculado da base por faixa e mês (seção 5). `eff26Full` monta o efetivo (manual > calculado) e o TOTAL, se vazio, é a soma/média ponderada dos efetivos por categoria. Amarelo = manual; botão "Apagar campos manuais de 2026"; Desfazer, "Salvar simulador" (`DEFAULT_M26`) e localStorage preservam. As edições da seção 5 continuam mudando a base (e portanto os calculados).
+
 ## v19 — tarifas: 2026 = TARIFA (R$), 2027 = TARIFA FINAL (R$)
 
 Conferido na planilha: `TARIFA FINAL (R$) = ROUND(TARIFA × (1 + reajuste) × (1 − desconto), 6)`; o simulador já calculava exatamente isso para 2027 (`tf`). Para 2026 o parser agora lê a linha **TARIFA (R$)** (com o desconto do cliente, sem reajuste) do último mês de 2026 da planilha (`tarPrev`, com `tarPrevSrc` = "TARIFA (R$) de Dez-2026"); sem colunas de 2026, usa a TARIFA (R$) do 1º mês de 2027 (que, pela convenção da planilha, é a tarifa antes do reajuste) e avisa. A leitura de um LeverPro pelas colunas de 2026 também usa TARIFA (R$) sem reajuste. Verificado: AGUA_ESGOTO NORMAL RES → 2026 [6,11 · 14,05 · 26,27 · 45,82 · 48,88], 2027 [6,67 · 15,33 · 28,67 · 50,00 · 53,34].
