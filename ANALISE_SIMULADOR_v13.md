@@ -49,6 +49,10 @@ Testado em Chromium headless (Playwright): carregamento sem erros, edição por 
 
 Validado em Chromium headless: regressão da v13 completa + dicas (cabeçalho, campo, KPI), simulação rápida (prévia e aplicação), tour completo, navegação por etapas, marcação da etapa 5 ao exportar, desligar dicas, importação atualizando a lista de tarifas.
 
+## v21 — comparativo vira diagnóstico 2026 × 2027
+
+O card "Comparativo consolidado" passa a ser **Comparativo e diagnóstico**: por categoria e total, ECO FAT, **MED P/ECO**, **FAT P/ECO** e **VALOR** em 2026 × 2027 base × 2027 simulado, com Δ% (sim × 2026) destacado acima da tolerância (laranja) e do dobro (vermelho). Abaixo, o diagnóstico por categoria: valor simulado × meta (2026 × (1 + meta)), decomposição do desvio (economias, consumo médio, faturado por economia, tarifa média) e o **MED P/ECO de 2027 necessário** para bater a meta (`diagSolve`, bissecção sobre um fator uniforme com `monthDetail`), com botão "Aplicar em 2027" que grava o fator via `setUniform` (entra em Ajustes ativos, cenários e Desfazer). Tolerância e meta são campos persistidos. Teste: meta +5% → "MED 8,14 → 8,63 (× 1,06)"; aplicar deixou RES exatamente na meta (143.120.324); Desfazer voltou.
+
 ## v20 — campos de 2026 manuais e independentes
 
 Os cinco campos de 2026 da seção 3 (ECO FAT, MED P/ECO, VOL MED, FAT P/ECO, VALOR — por categoria e TOTAL) e os da comparação por tarifa (ECO, MED, FAT, VALOR) são **manuais**: `S.m26[seg][cat][campo]` / `S.tar26[seg][tarifa][cat][campo]`. O que é digitado vale como está e **não recalcula os vizinhos**; campo vazio = calculado da base por faixa e mês (seção 5). `eff26Full` monta o efetivo (manual > calculado) e o TOTAL, se vazio, é a soma/média ponderada dos efetivos por categoria. Amarelo = manual; botão "Apagar campos manuais de 2026"; Desfazer, "Salvar simulador" (`DEFAULT_M26`) e localStorage preservam. As edições da seção 5 continuam mudando a base (e portanto os calculados).
