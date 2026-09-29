@@ -49,6 +49,10 @@ Testado em Chromium headless (Playwright): carregamento sem erros, edição por 
 
 Validado em Chromium headless: regressão da v13 completa + dicas (cabeçalho, campo, KPI), simulação rápida (prévia e aplicação), tour completo, navegação por etapas, marcação da etapa 5 ao exportar, desligar dicas, importação atualizando a lista de tarifas.
 
+## v17 — TARIFA FONTE ALTERNATIVA tratada à parte
+
+`EXCLUDED_TABS = ['TARIFA FONTE ALTERNATIVA']`: em `prepSeg`, os blocos dessas abas saem de `seg.blocks` (vão para `seg.excluded`), então ficam fora de todos os somatórios, tabelas, grades, cenários, gráficos, simulação rápida, base 2026 e Excel — de ÁGUA ou ESGOTO, hoje só existe em ESGOTO. Continuam embutidos no arquivo ("Salvar simulador" preserva) e a tarifa aparece na lista com o aviso "tratada à parte". O status da importação informa quanto ficou de fora. Teste: bloco de R$ 67,9 mi injetado na aba não alterou o total de ESGOTO.
+
 ## v16 — economias faturadas editáveis (2026 e 2027)
 
 Regra: ao mudar as economias, o **consumo médio por economia fica constante** — o volume acompanha e VOL FAT/VALOR recalculam pela regra escalonada (inclusive o mínimo da faixa 1).
